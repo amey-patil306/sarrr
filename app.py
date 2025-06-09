@@ -44,6 +44,144 @@ print("Model successfully created")
 # Define image size - using standard ResNet input size
 IMG_SIZE = (224, 224)
 
+# Regional forest data for different locations (approximate values)
+REGIONAL_FOREST_DATA = {
+    'amazon': {
+        'name': 'Amazon Rainforest',
+        'original_coverage': 85,  # Original forest coverage percentage
+        'current_coverage': 78,   # Current estimated coverage
+        'trees_per_hectare': 400,
+        'region_bounds': {'lat_min': -20, 'lat_max': 10, 'lon_min': -80, 'lon_max': -45}
+    },
+    'congo': {
+        'name': 'Congo Basin',
+        'original_coverage': 90,
+        'current_coverage': 82,
+        'trees_per_hectare': 350,
+        'region_bounds': {'lat_min': -10, 'lat_max': 10, 'lon_min': 5, 'lon_max': 35}
+    },
+    'borneo': {
+        'name': 'Borneo Rainforest',
+        'original_coverage': 95,
+        'current_coverage': 65,
+        'trees_per_hectare': 450,
+        'region_bounds': {'lat_min': -5, 'lat_max': 8, 'lon_min': 108, 'lon_max': 120}
+    },
+    'siberian': {
+        'name': 'Siberian Forest',
+        'original_coverage': 80,
+        'current_coverage': 75,
+        'trees_per_hectare': 200,
+        'region_bounds': {'lat_min': 50, 'lat_max': 70, 'lon_min': 60, 'lon_max': 180}
+    },
+    'default': {
+        'name': 'General Forest Area',
+        'original_coverage': 75,
+        'current_coverage': 65,
+        'trees_per_hectare': 300,
+        'region_bounds': None
+    }
+}
+
+def identify_forest_region(lat, lon):
+    """Identify which forest region the coordinates belong to"""
+    for region_key, region_data in REGIONAL_FOREST_DATA.items():
+        if region_key == 'default':
+            continue
+        
+        bounds = region_data['region_bounds']
+        if (bounds['lat_min'] <= lat <= bounds['lat_max'] and 
+            bounds['lon_min'] <= lon <= bounds['lon_max']):
+            return region_key, region_data
+    
+    return 'default', REGIONAL_FOREST_DATA['default']
+
+def calculate_deforestation_statistics(lat, lon, confidence_score, deforestation_detected):
+    """Calculate detailed deforestation statistics for the location"""
+    
+    # Identify the forest region
+    region_key, region_data = identify_forest_region(lat, lon)
+    
+    # Calculate area covered by analysis (approximate based on zoom level)
+    # Assuming we're analyzing roughly 1 km² area
+    analysis_area_km2 = 1.0
+    analysis_area_hectares = analysis_area_km2 * 100
+    
+    # Calculate deforestation percentage based on confidence and regional data
+    if deforestation_detected:
+        # Base deforestation percentage on confidence score
+        local_deforestation_percentage = min(confidence_score * 100, 95)
+        
+        # Adjust based on known regional patterns
+        if region_key == 'amazon':
+            local_deforestation_percentage = max(local_deforestation_percentage, 15)
+        elif region_key == 'borneo':
+            local_deforestation_percentage = max(local_deforestation_percentage, 25)
+        elif region_key == 'congo':
+            local_deforestation_percentage = max(local_deforestation_percentage, 10)
+        elif region_key == 'siberian':
+            local_deforestation_percentage = max(local_deforestation_percentage, 8)
+    else:
+        # Even if no deforestation detected, there might be some minimal loss
+        local_deforestation_percentage = min(confidence_score * 20, 5)
+    
+    # Calculate affected area
+    deforested_area_hectares = (local_deforestation_percentage / 100) * analysis_area_hectares
+    deforested_area_km2 = deforested_area_hectares / 100
+    
+    # Calculate trees lost and needed
+    trees_per_hectare = region_data['trees_per_hectare']
+    trees_lost = int(deforested_area_hectares * trees_per_hectare)
+    
+    # Calculate reforestation needs
+    trees_needed_immediate = trees_lost
+    trees_needed_buffer = int(trees_lost * 1.3)  # 30% buffer for survival rate
+    
+    # Calculate carbon impact (approximate)
+    # Average tree stores about 22 kg of CO2 per year
+    co2_impact_tons = (trees_lost * 22) / 1000
+    
+    # Calculate restoration timeline
+    if deforested_area_hectares > 50:
+        restoration_years = "8-12 years"
+        priority = "Critical"
+    elif deforested_area_hectares > 20:
+        restoration_years = "5-8 years"
+        priority = "High"
+    elif deforested_area_hectares > 5:
+        restoration_years = "3-5 years"
+        priority = "Medium"
+    else:
+        restoration_years = "2-3 years"
+        priority = "Low"
+    
+    # Calculate cost estimates (rough estimates in USD)
+    cost_per_tree = 2.5  # Average cost including planting and maintenance
+    reforestation_cost = trees_needed_buffer * cost_per_tree
+    
+    statistics = {
+        'region_name': region_data['name'],
+        'coordinates': f"{lat:.4f}, {lon:.4f}",
+        'analysis_area_km2': analysis_area_km2,
+        'analysis_area_hectares': analysis_area_hectares,
+        'local_deforestation_percentage': round(local_deforestation_percentage, 2),
+        'regional_deforestation_percentage': round(region_data['original_coverage'] - region_data['current_coverage'], 2),
+        'deforested_area_hectares': round(deforested_area_hectares, 2),
+        'deforested_area_km2': round(deforested_area_km2, 4),
+        'trees_lost': trees_lost,
+        'trees_needed_immediate': trees_needed_immediate,
+        'trees_needed_buffer': trees_needed_buffer,
+        'trees_per_hectare': trees_per_hectare,
+        'co2_impact_tons': round(co2_impact_tons, 2),
+        'restoration_years': restoration_years,
+        'priority': priority,
+        'reforestation_cost': round(reforestation_cost, 2),
+        'original_coverage': region_data['original_coverage'],
+        'current_coverage': region_data['current_coverage']
+    }
+    
+    return statistics
+
 # Function to analyze image content for deforestation indicators
 def analyze_image_content(image_path):
     """
@@ -316,7 +454,7 @@ def create_synthetic_forest_image(lat, lon, zoom):
         return None
 
 # Function to predict deforestation
-def predict_deforestation(image_path):
+def predict_deforestation(image_path, lat=None, lon=None):
     """
     Enhanced deforestation prediction using both CNN and computer vision analysis
     """
@@ -367,6 +505,11 @@ def predict_deforestation(image_path):
         original_path = os.path.join(app.config["UPLOAD_FOLDER"], original_filename)
         cv2.imwrite(original_path, original)
 
+        # Calculate statistics if coordinates are provided
+        statistics = None
+        if lat is not None and lon is not None:
+            statistics = calculate_deforestation_statistics(lat, lon, final_score, deforestation_detected)
+
         if deforestation_detected:  # Deforestation detected
             mask_filename = f"mask_{int(time.time())}.jpg"
             output_filename = f"output_{int(time.time())}.jpg"
@@ -381,14 +524,14 @@ def predict_deforestation(image_path):
             cv2.imwrite(mask_path, mask)
             cv2.imwrite(output_path, output)
 
-            return True, original_path, mask_path, output_path, final_score
+            return True, original_path, mask_path, output_path, final_score, statistics
 
-        return False, original_path, None, None, final_score  # No deforestation detected
+        return False, original_path, None, None, final_score, statistics  # No deforestation detected
         
     except Exception as e:
         print(f"Error in predict_deforestation: {e}")
         # Return default values in case of error
-        return False, image_path, None, None, 0.1
+        return False, image_path, None, None, 0.1, None
 
 def get_severity_level(confidence_score):
     """Determine severity level based on confidence score"""
@@ -420,7 +563,7 @@ def index():
 
             print(f"File uploaded: {file_path}")
             
-            deforestation_detected, original, mask, output, confidence = predict_deforestation(
+            deforestation_detected, original, mask, output, confidence, statistics = predict_deforestation(
                 file_path
             )
 
@@ -430,7 +573,8 @@ def index():
                 'confidence': float(confidence),
                 'original': original,
                 'mask': mask,
-                'output': output
+                'output': output,
+                'statistics': statistics
             }
 
             return render_template(
@@ -441,7 +585,8 @@ def index():
                 result="🛑 Deforestation Detected!" if deforestation_detected else "✅ No Deforestation Detected!",
                 confidence=confidence,
                 deforestation_detected=deforestation_detected,
-                show_ai_button=True
+                show_ai_button=True,
+                statistics=statistics
             )
 
     return render_template("index.html", uploaded_image=None)
@@ -480,9 +625,11 @@ def analyze_location():
         
         print(f"Satellite image saved to: {image_path}")
         
-        # Analyze the fetched image
+        # Analyze the fetched image with coordinates for statistics
         print("Analyzing image for deforestation...")
-        deforestation_detected, original, mask, output, confidence = predict_deforestation(image_path)
+        deforestation_detected, original, mask, output, confidence, statistics = predict_deforestation(
+            image_path, lat, lon
+        )
         
         # Store analysis results in session
         session['analysis_results'] = {
@@ -491,7 +638,8 @@ def analyze_location():
             'original': original,
             'mask': mask,
             'output': output,
-            'location': {'lat': lat, 'lon': lon, 'zoom': zoom}
+            'location': {'lat': lat, 'lon': lon, 'zoom': zoom},
+            'statistics': statistics
         }
         
         print(f"Analysis complete. Deforestation detected: {deforestation_detected}, Confidence: {confidence}")
@@ -504,7 +652,8 @@ def analyze_location():
             'mask': mask,
             'output': output,
             'location': f"Lat: {lat}, Lon: {lon}",
-            'message': f'Analysis completed for coordinates ({lat}, {lon})'
+            'message': f'Analysis completed for coordinates ({lat}, {lon})',
+            'statistics': statistics
         })
         
     except ValueError as e:
@@ -535,6 +684,7 @@ def get_ai_analytics():
         deforestation_detected = analysis_results['deforestation_detected']
         confidence = analysis_results['confidence']
         location_info = analysis_results.get('location', {})
+        statistics = analysis_results.get('statistics')
 
         # Get AI-powered insights
         solutions = None
@@ -544,8 +694,14 @@ def get_ai_analytics():
         if deforestation_detected:
             severity = get_severity_level(confidence)
             location_str = f"Coordinates: {location_info.get('lat', 'N/A')}, {location_info.get('lon', 'N/A')}" if location_info else "Uploaded image"
+            
+            # Include statistics in the context for AI analysis
+            context_info = location_str
+            if statistics:
+                context_info += f"\nRegion: {statistics['region_name']}\nDeforestation: {statistics['local_deforestation_percentage']}%\nTrees lost: {statistics['trees_lost']}"
+            
             solutions = llama_service.get_deforestation_solutions(
-                location_info=location_str, 
+                location_info=context_info, 
                 severity=severity
             )
         

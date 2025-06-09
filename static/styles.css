@@ -622,6 +622,197 @@ nav ul li a:hover {
     transition: width var(--transition-slow);
 }
 
+/* Deforestation Statistics */
+.deforestation-statistics {
+    background-color: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    box-shadow: 0 5px 15px var(--shadow);
+    margin-bottom: var(--space-lg);
+}
+
+.deforestation-statistics h2 {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.stat-section {
+    background-color: var(--bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    border-left: 4px solid var(--accent);
+}
+
+.stat-section.full-width {
+    grid-column: 1 / -1;
+}
+
+.stat-section h3 {
+    color: var(--accent);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--fs-md);
+}
+
+.stat-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--text-alt);
+}
+
+.stat-value.deforestation-percentage {
+    color: var(--danger);
+    font-size: var(--fs-md);
+}
+
+.stat-value.trees-lost {
+    color: var(--danger);
+}
+
+.stat-value.co2-impact {
+    color: var(--warning);
+}
+
+.stat-value.cost-estimate {
+    color: var(--accent);
+}
+
+.stat-value.priority-critical {
+    color: var(--danger);
+    background-color: rgba(231, 76, 60, 0.1);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+}
+
+.stat-value.priority-high {
+    color: var(--warning);
+    background-color: rgba(243, 156, 18, 0.1);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+}
+
+.stat-value.priority-medium {
+    color: var(--accent);
+    background-color: rgba(46, 204, 113, 0.1);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+}
+
+.stat-value.priority-low {
+    color: var(--success);
+    background-color: rgba(46, 204, 113, 0.1);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+}
+
+/* Action Recommendations */
+.action-recommendations {
+    background-color: var(--bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.recommendation {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+.recommendation.critical {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid var(--danger);
+    color: var(--danger);
+}
+
+.recommendation.high {
+    background-color: rgba(243, 156, 18, 0.1);
+    border-left: 4px solid var(--warning);
+    color: var(--warning);
+}
+
+.recommendation.medium {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid #3498db;
+    color: #3498db;
+}
+
+.recommendation.low {
+    background-color: rgba(46, 204, 113, 0.1);
+    border-left: 4px solid var(--success);
+    color: var(--success);
+}
+
+.recommendation i {
+    margin-top: 2px;
+    font-size: var(--fs-md);
+}
+
+.recommendation-details {
+    margin-top: var(--space-md);
+    color: var(--text);
+}
+
+.recommendation-details p {
+    margin-bottom: var(--space-sm);
+    font-weight: bold;
+}
+
+.recommendation-details ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.recommendation-details li {
+    padding: var(--space-xs) 0;
+    padding-left: var(--space-md);
+    position: relative;
+}
+
+.recommendation-details li::before {
+    content: "🌱";
+    position: absolute;
+    left: 0;
+    top: var(--space-xs);
+}
+
 /* Results */
 .results-container {
     margin-top: var(--space-xl);
@@ -1065,5 +1256,15 @@ footer {
     
     .map-container {
         height: 300px;
+    }
+    
+    .statistics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
     }
 }

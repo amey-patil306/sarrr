@@ -182,6 +182,157 @@
                     <p>{{ (confidence * 100)|round(1) }}% confidence</p>
                 </div>
                 {% endif %}
+
+                <!-- Deforestation Statistics Section -->
+                {% if statistics %}
+                <div class="deforestation-statistics">
+                    <h2><i class="fas fa-chart-pie"></i> Deforestation Statistics & Analysis</h2>
+                    
+                    <div class="statistics-grid">
+                        <!-- Location Information -->
+                        <div class="stat-section">
+                            <h3><i class="fas fa-map-marker-alt"></i> Location Information</h3>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-label">Region:</span>
+                                    <span class="stat-value">{{ statistics.region_name }}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Coordinates:</span>
+                                    <span class="stat-value">{{ statistics.coordinates }}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Analysis Area:</span>
+                                    <span class="stat-value">{{ statistics.analysis_area_km2 }} km² ({{ statistics.analysis_area_hectares }} hectares)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deforestation Analysis -->
+                        <div class="stat-section">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Deforestation Analysis</h3>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-label">Local Deforestation:</span>
+                                    <span class="stat-value deforestation-percentage">{{ statistics.local_deforestation_percentage }}%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Regional Average:</span>
+                                    <span class="stat-value">{{ statistics.regional_deforestation_percentage }}%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Affected Area:</span>
+                                    <span class="stat-value">{{ statistics.deforested_area_hectares }} hectares ({{ statistics.deforested_area_km2 }} km²)</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Priority Level:</span>
+                                    <span class="stat-value priority-{{ statistics.priority.lower() }}">{{ statistics.priority }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tree Loss & Restoration -->
+                        <div class="stat-section">
+                            <h3><i class="fas fa-tree"></i> Tree Loss & Restoration Needs</h3>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-label">Estimated Trees Lost:</span>
+                                    <span class="stat-value trees-lost">{{ "{:,}".format(statistics.trees_lost) }} trees</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Trees Needed (Immediate):</span>
+                                    <span class="stat-value">{{ "{:,}".format(statistics.trees_needed_immediate) }} trees</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Trees Needed (With Buffer):</span>
+                                    <span class="stat-value">{{ "{:,}".format(statistics.trees_needed_buffer) }} trees</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Trees per Hectare:</span>
+                                    <span class="stat-value">{{ statistics.trees_per_hectare }} trees/hectare</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Environmental Impact -->
+                        <div class="stat-section">
+                            <h3><i class="fas fa-leaf"></i> Environmental Impact</h3>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-label">CO₂ Impact:</span>
+                                    <span class="stat-value co2-impact">{{ statistics.co2_impact_tons }} tons CO₂/year</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Original Forest Coverage:</span>
+                                    <span class="stat-value">{{ statistics.original_coverage }}%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Current Forest Coverage:</span>
+                                    <span class="stat-value">{{ statistics.current_coverage }}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Restoration Plan -->
+                        <div class="stat-section">
+                            <h3><i class="fas fa-seedling"></i> Restoration Plan</h3>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-label">Estimated Timeline:</span>
+                                    <span class="stat-value">{{ statistics.restoration_years }}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Estimated Cost:</span>
+                                    <span class="stat-value cost-estimate">${{ "{:,.2f}".format(statistics.reforestation_cost) }} USD</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Cost per Tree:</span>
+                                    <span class="stat-value">$2.50 USD (including maintenance)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Recommendations -->
+                        <div class="stat-section full-width">
+                            <h3><i class="fas fa-clipboard-list"></i> Immediate Action Recommendations</h3>
+                            <div class="action-recommendations">
+                                {% if statistics.priority == 'Critical' %}
+                                <div class="recommendation critical">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <strong>Critical Priority:</strong> Immediate intervention required. Deploy emergency reforestation teams and establish protective barriers.
+                                </div>
+                                {% elif statistics.priority == 'High' %}
+                                <div class="recommendation high">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>High Priority:</strong> Schedule reforestation within 3-6 months. Monitor area for further degradation.
+                                </div>
+                                {% elif statistics.priority == 'Medium' %}
+                                <div class="recommendation medium">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Medium Priority:</strong> Plan reforestation within 6-12 months. Implement preventive measures.
+                                </div>
+                                {% else %}
+                                <div class="recommendation low">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Low Priority:</strong> Monitor area and implement gradual restoration measures.
+                                </div>
+                                {% endif %}
+                                
+                                <div class="recommendation-details">
+                                    <p><strong>Recommended Actions:</strong></p>
+                                    <ul>
+                                        <li>Plant {{ "{:,}".format(statistics.trees_needed_buffer) }} native tree species</li>
+                                        <li>Establish {{ statistics.analysis_area_hectares }} hectares of protected zone</li>
+                                        <li>Implement soil restoration measures</li>
+                                        <li>Set up monitoring stations for ongoing surveillance</li>
+                                        <li>Engage local communities in conservation efforts</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <div class="result-images">
                     <div class="result-image-card">
@@ -294,6 +445,11 @@
                         <div id="location-confidence-fill" class="confidence-fill"></div>
                     </div>
                     <p id="location-confidence-text"></p>
+                </div>
+
+                <!-- Location Statistics Section -->
+                <div id="location-statistics" class="deforestation-statistics" style="display: none;">
+                    <!-- Content will be loaded here -->
                 </div>
                 
                 <div id="location-result-images" class="result-images">
@@ -606,6 +762,11 @@
                 confidenceFill.style.width = `${(data.confidence * 100).toFixed(1)}%`;
                 confidenceText.textContent = `${(data.confidence * 100).toFixed(1)}% confidence`;
             }
+
+            // Update statistics section
+            if (data.statistics) {
+                displayLocationStatistics(data.statistics);
+            }
             
             // Update result images
             const imagesContainer = document.getElementById('location-result-images');
@@ -657,6 +818,175 @@
             setTimeout(() => {
                 document.getElementById('location-results').scrollIntoView({ behavior: 'smooth' });
             }, 100);
+        }
+
+        function displayLocationStatistics(statistics) {
+            const statisticsContainer = document.getElementById('location-statistics');
+            
+            const statisticsHTML = `
+                <h2><i class="fas fa-chart-pie"></i> Deforestation Statistics & Analysis</h2>
+                
+                <div class="statistics-grid">
+                    <!-- Location Information -->
+                    <div class="stat-section">
+                        <h3><i class="fas fa-map-marker-alt"></i> Location Information</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">Region:</span>
+                                <span class="stat-value">${statistics.region_name}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Coordinates:</span>
+                                <span class="stat-value">${statistics.coordinates}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Analysis Area:</span>
+                                <span class="stat-value">${statistics.analysis_area_km2} km² (${statistics.analysis_area_hectares} hectares)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deforestation Analysis -->
+                    <div class="stat-section">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Deforestation Analysis</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">Local Deforestation:</span>
+                                <span class="stat-value deforestation-percentage">${statistics.local_deforestation_percentage}%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Regional Average:</span>
+                                <span class="stat-value">${statistics.regional_deforestation_percentage}%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Affected Area:</span>
+                                <span class="stat-value">${statistics.deforested_area_hectares} hectares (${statistics.deforested_area_km2} km²)</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Priority Level:</span>
+                                <span class="stat-value priority-${statistics.priority.toLowerCase()}">${statistics.priority}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tree Loss & Restoration -->
+                    <div class="stat-section">
+                        <h3><i class="fas fa-tree"></i> Tree Loss & Restoration Needs</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">Estimated Trees Lost:</span>
+                                <span class="stat-value trees-lost">${statistics.trees_lost.toLocaleString()} trees</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Trees Needed (Immediate):</span>
+                                <span class="stat-value">${statistics.trees_needed_immediate.toLocaleString()} trees</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Trees Needed (With Buffer):</span>
+                                <span class="stat-value">${statistics.trees_needed_buffer.toLocaleString()} trees</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Trees per Hectare:</span>
+                                <span class="stat-value">${statistics.trees_per_hectare} trees/hectare</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Environmental Impact -->
+                    <div class="stat-section">
+                        <h3><i class="fas fa-leaf"></i> Environmental Impact</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">CO₂ Impact:</span>
+                                <span class="stat-value co2-impact">${statistics.co2_impact_tons} tons CO₂/year</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Original Forest Coverage:</span>
+                                <span class="stat-value">${statistics.original_coverage}%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Current Forest Coverage:</span>
+                                <span class="stat-value">${statistics.current_coverage}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Restoration Plan -->
+                    <div class="stat-section">
+                        <h3><i class="fas fa-seedling"></i> Restoration Plan</h3>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">Estimated Timeline:</span>
+                                <span class="stat-value">${statistics.restoration_years}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Estimated Cost:</span>
+                                <span class="stat-value cost-estimate">$${statistics.reforestation_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Cost per Tree:</span>
+                                <span class="stat-value">$2.50 USD (including maintenance)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Recommendations -->
+                    <div class="stat-section full-width">
+                        <h3><i class="fas fa-clipboard-list"></i> Immediate Action Recommendations</h3>
+                        <div class="action-recommendations">
+                            ${getRecommendationHTML(statistics)}
+                            
+                            <div class="recommendation-details">
+                                <p><strong>Recommended Actions:</strong></p>
+                                <ul>
+                                    <li>Plant ${statistics.trees_needed_buffer.toLocaleString()} native tree species</li>
+                                    <li>Establish ${statistics.analysis_area_hectares} hectares of protected zone</li>
+                                    <li>Implement soil restoration measures</li>
+                                    <li>Set up monitoring stations for ongoing surveillance</li>
+                                    <li>Engage local communities in conservation efforts</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            statisticsContainer.innerHTML = statisticsHTML;
+            statisticsContainer.style.display = 'block';
+        }
+
+        function getRecommendationHTML(statistics) {
+            const priority = statistics.priority;
+            
+            if (priority === 'Critical') {
+                return `
+                    <div class="recommendation critical">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Critical Priority:</strong> Immediate intervention required. Deploy emergency reforestation teams and establish protective barriers.
+                    </div>
+                `;
+            } else if (priority === 'High') {
+                return `
+                    <div class="recommendation high">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>High Priority:</strong> Schedule reforestation within 3-6 months. Monitor area for further degradation.
+                    </div>
+                `;
+            } else if (priority === 'Medium') {
+                return `
+                    <div class="recommendation medium">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Medium Priority:</strong> Plan reforestation within 6-12 months. Implement preventive measures.
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="recommendation low">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Low Priority:</strong> Monitor area and implement gradual restoration measures.
+                    </div>
+                `;
+            }
         }
 
         function setupAIAnalytics() {
