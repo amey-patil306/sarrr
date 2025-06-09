@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Metrics | ForestGuard AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button id="theme-switch">
+            <i class="fas fa-sun light-icon"></i>
+            <i class="fas fa-moon dark-icon"></i>
+        </button>
+    </div>
+
+    <!-- Header Section -->
+    <header>
+        <div class="logo">
+            <span class="logo-icon"><i class="fas fa-tree"></i></span>
+            <span class="logo-text">ForestGuard AI</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="/#about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="/#location-analysis"><i class="fas fa-map-marker-alt"></i> Location</a></li>
+                <li><a href="/#upload"><i class="fas fa-upload"></i> Upload</a></li>
+                <li><a href="/performance_metrics" class="active"><i class="fas fa-chart-line"></i> Performance</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+        </div>
+    </header>
+
+    <!-- Performance Metrics Section -->
+    <section class="performance-metrics-section">
+        <div class="container">
+            <div class="metrics-header">
+                <h1><i class="fas fa-chart-line"></i> Model Performance Metrics</h1>
+                <p>Comprehensive analysis of ForestGuard AI's detection capabilities and system performance</p>
+                <div class="last-updated">
+                    <i class="fas fa-clock"></i> Last Updated: {{ metrics.basic_stats.last_updated }}
+                </div>
+            </div>
+
+            <!-- Basic Statistics -->
+            <div class="metrics-grid">
+                <div class="metric-card overview">
+                    <h2><i class="fas fa-info-circle"></i> System Overview</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">Model Version</span>
+                            <span class="metric-value version">{{ metrics.basic_stats.model_version }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Total Predictions</span>
+                            <span class="metric-value total-predictions">{{ metrics.basic_stats.total_predictions }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">System Uptime</span>
+                            <span class="metric-value uptime">{{ metrics.basic_stats.uptime_hours }} hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Statistics -->
+                {% if metrics.performance_stats %}
+                <div class="metric-card performance">
+                    <h2><i class="fas fa-tachometer-alt"></i> Processing Performance</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">Average Processing Time</span>
+                            <span class="metric-value processing-time">{{ metrics.performance_stats.avg_processing_time }}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Fastest Processing</span>
+                            <span class="metric-value fastest">{{ metrics.performance_stats.min_processing_time }}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Slowest Processing</span>
+                            <span class="metric-value slowest">{{ metrics.performance_stats.max_processing_time }}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Median Processing Time</span>
+                            <span class="metric-value median">{{ metrics.performance_stats.median_processing_time }}s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Standard Deviation</span>
+                            <span class="metric-value std-dev">{{ metrics.performance_stats.std_processing_time }}s</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Accuracy Statistics -->
+                {% if metrics.accuracy_stats %}
+                <div class="metric-card accuracy">
+                    <h2><i class="fas fa-bullseye"></i> Model Accuracy</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">Average Confidence</span>
+                            <span class="metric-value confidence">{{ (metrics.accuracy_stats.avg_confidence * 100)|round(1) }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Highest Confidence</span>
+                            <span class="metric-value high-conf">{{ (metrics.accuracy_stats.max_confidence * 100)|round(1) }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Lowest Confidence</span>
+                            <span class="metric-value low-conf">{{ (metrics.accuracy_stats.min_confidence * 100)|round(1) }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">High Confidence Predictions</span>
+                            <span class="metric-value high-conf-count">{{ metrics.accuracy_stats.high_confidence_predictions }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Low Confidence Predictions</span>
+                            <span class="metric-value low-conf-count">{{ metrics.accuracy_stats.low_confidence_predictions }}</span>
+                        </div>
+                        {% if metrics.accuracy_stats.estimated_accuracy %}
+                        <div class="metric-item">
+                            <span class="metric-label">Estimated Accuracy</span>
+                            <span class="metric-value estimated-accuracy">{{ metrics.accuracy_stats.estimated_accuracy }}%</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Detection Statistics -->
+                {% if metrics.detection_stats %}
+                <div class="metric-card detection">
+                    <h2><i class="fas fa-search"></i> Detection Statistics</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">Deforestation Detected</span>
+                            <span class="metric-value deforestation-detected">{{ metrics.detection_stats.deforestation_detected }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">No Deforestation Detected</span>
+                            <span class="metric-value no-deforestation">{{ metrics.detection_stats.no_deforestation_detected }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Detection Rate</span>
+                            <span class="metric-value detection-rate">{{ metrics.detection_stats.deforestation_detection_rate }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Model Information -->
+                <div class="metric-card model-info">
+                    <h2><i class="fas fa-brain"></i> Model Architecture</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">Base Model</span>
+                            <span class="metric-value base-model">{{ metrics.model_info.base_model }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Input Shape</span>
+                            <span class="metric-value input-shape">{{ metrics.model_info.input_shape }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Total Parameters</span>
+                            <span class="metric-value total-params">{{ "{:,}".format(metrics.model_info.total_parameters) if metrics.model_info.total_parameters != 'N/A' else 'N/A' }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Trainable Parameters</span>
+                            <span class="metric-value trainable-params">{{ "{:,}".format(metrics.model_info.trainable_parameters) if metrics.model_info.trainable_parameters != 'N/A' else 'N/A' }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Output Type</span>
+                            <span class="metric-value output-type">{{ metrics.model_info.output_type }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Preprocessing</span>
+                            <span class="metric-value preprocessing">{{ metrics.model_info.preprocessing }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                {% if metrics.system_info and not metrics.system_info.error %}
+                <div class="metric-card system-info">
+                    <h2><i class="fas fa-server"></i> System Information</h2>
+                    <div class="metric-items">
+                        <div class="metric-item">
+                            <span class="metric-label">CPU Usage</span>
+                            <span class="metric-value cpu-usage">{{ metrics.system_info.cpu_percent }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Memory Usage</span>
+                            <span class="metric-value memory-usage">{{ metrics.system_info.memory_percent }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Available Memory</span>
+                            <span class="metric-value memory-available">{{ metrics.system_info.memory_available_gb }} GB</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Total Memory</span>
+                            <span class="metric-value memory-total">{{ metrics.system_info.memory_total_gb }} GB</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Disk Usage</span>
+                            <span class="metric-value disk-usage">{{ metrics.system_info.disk_usage_percent }}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Platform</span>
+                            <span class="metric-value platform">{{ metrics.system_info.platform }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Python Version</span>
+                            <span class="metric-value python-version">{{ metrics.system_info.python_version }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">TensorFlow Version</span>
+                            <span class="metric-value tf-version">{{ metrics.system_info.tensorflow_version }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">OpenCV Version</span>
+                            <span class="metric-value cv-version">{{ metrics.system_info.opencv_version }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Performance Charts -->
+            {% if metrics.performance_stats or metrics.accuracy_stats %}
+            <div class="charts-section">
+                <h2><i class="fas fa-chart-bar"></i> Performance Visualization</h2>
+                <div class="charts-grid">
+                    {% if metrics.performance_stats %}
+                    <div class="chart-container">
+                        <h3>Processing Time Distribution</h3>
+                        <canvas id="processingTimeChart"></canvas>
+                    </div>
+                    {% endif %}
+                    
+                    {% if metrics.accuracy_stats %}
+                    <div class="chart-container">
+                        <h3>Confidence Score Distribution</h3>
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                    {% endif %}
+                    
+                    {% if metrics.detection_stats %}
+                    <div class="chart-container">
+                        <h3>Detection Results</h3>
+                        <canvas id="detectionChart"></canvas>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Performance Insights -->
+            <div class="insights-section">
+                <h2><i class="fas fa-lightbulb"></i> Performance Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <h3><i class="fas fa-rocket"></i> Speed Analysis</h3>
+                        <div class="insight-content">
+                            {% if metrics.performance_stats %}
+                            <p>The model processes images in an average of <strong>{{ metrics.performance_stats.avg_processing_time }}s</strong>.</p>
+                            {% if metrics.performance_stats.avg_processing_time < 2.0 %}
+                            <p class="insight-positive">✅ Excellent processing speed - suitable for real-time applications.</p>
+                            {% elif metrics.performance_stats.avg_processing_time < 5.0 %}
+                            <p class="insight-neutral">⚡ Good processing speed - suitable for most applications.</p>
+                            {% else %}
+                            <p class="insight-warning">⚠️ Processing speed could be improved for real-time applications.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>No processing time data available yet. Process some images to see performance metrics.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <h3><i class="fas fa-target"></i> Accuracy Analysis</h3>
+                        <div class="insight-content">
+                            {% if metrics.accuracy_stats %}
+                            <p>Average model confidence: <strong>{{ (metrics.accuracy_stats.avg_confidence * 100)|round(1) }}%</strong></p>
+                            {% if metrics.accuracy_stats.avg_confidence > 0.8 %}
+                            <p class="insight-positive">✅ High confidence predictions indicate reliable model performance.</p>
+                            {% elif metrics.accuracy_stats.avg_confidence > 0.6 %}
+                            <p class="insight-neutral">⚡ Moderate confidence levels - model performs well in most cases.</p>
+                            {% else %}
+                            <p class="insight-warning">⚠️ Lower confidence levels may indicate challenging input data or model limitations.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>No accuracy data available yet. Process some images to see accuracy metrics.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <h3><i class="fas fa-chart-pie"></i> Detection Patterns</h3>
+                        <div class="insight-content">
+                            {% if metrics.detection_stats %}
+                            <p>Detection rate: <strong>{{ metrics.detection_stats.deforestation_detection_rate }}%</strong> of analyzed images show deforestation.</p>
+                            {% if metrics.detection_stats.deforestation_detection_rate > 70 %}
+                            <p class="insight-warning">⚠️ High deforestation detection rate - may indicate analysis of high-risk areas.</p>
+                            {% elif metrics.detection_stats.deforestation_detection_rate > 30 %}
+                            <p class="insight-neutral">⚡ Moderate deforestation detection rate - balanced analysis results.</p>
+                            {% else %}
+                            <p class="insight-positive">✅ Low deforestation detection rate - analyzing mostly healthy forest areas.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>No detection data available yet. Process some images to see detection patterns.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <h3><i class="fas fa-cogs"></i> System Health</h3>
+                        <div class="insight-content">
+                            {% if metrics.system_info and not metrics.system_info.error %}
+                            <p>System resources: CPU {{ metrics.system_info.cpu_percent }}%, Memory {{ metrics.system_info.memory_percent }}%</p>
+                            {% if metrics.system_info.cpu_percent < 70 and metrics.system_info.memory_percent < 80 %}
+                            <p class="insight-positive">✅ System running efficiently with good resource availability.</p>
+                            {% elif metrics.system_info.cpu_percent < 90 and metrics.system_info.memory_percent < 90 %}
+                            <p class="insight-neutral">⚡ System under moderate load - performance is stable.</p>
+                            {% else %}
+                            <p class="insight-warning">⚠️ High system resource usage - consider optimizing or scaling.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>System information unavailable. Running in limited environment.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refresh Button -->
+            <div class="refresh-section">
+                <button id="refresh-metrics" class="btn primary-btn">
+                    <i class="fas fa-sync-alt"></i> Refresh Metrics
+                </button>
+                <p>Metrics are updated automatically after each analysis. Click refresh to get the latest data.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-tree"></i> ForestGuard AI
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/#about">About</a></li>
+                    <li><a href="/#location-analysis">Location</a></li>
+                    <li><a href="/#upload">Upload</a></li>
+                    <li><a href="/performance_metrics">Performance</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h3>Contact Us</h3>
+                <p><i class="fas fa-envelope"></i> info@forestguard-ai.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 ForestGuard AI | All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeSwitch = document.getElementById('theme-switch');
+            const html = document.documentElement;
+            
+            // Check for saved theme preference or use default dark theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+            
+            themeSwitch.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+
+            // Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const nav = document.querySelector('nav');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                nav.classList.toggle('mobile-active');
+            });
+
+            // Initialize charts
+            initializeCharts();
+
+            // Refresh metrics functionality
+            document.getElementById('refresh-metrics').addEventListener('click', function() {
+                location.reload();
+            });
+        });
+
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-alt').trim()
+                        },
+                        grid: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-alt').trim()
+                        },
+                        grid: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+                        }
+                    }
+                }
+            };
+
+            // Processing Time Chart
+            {% if metrics.performance_stats %}
+            const processingTimeCtx = document.getElementById('processingTimeChart');
+            if (processingTimeCtx) {
+                new Chart(processingTimeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Min', 'Average', 'Median', 'Max'],
+                        datasets: [{
+                            label: 'Processing Time (seconds)',
+                            data: [
+                                {{ metrics.performance_stats.min_processing_time }},
+                                {{ metrics.performance_stats.avg_processing_time }},
+                                {{ metrics.performance_stats.median_processing_time }},
+                                {{ metrics.performance_stats.max_processing_time }}
+                            ],
+                            backgroundColor: [
+                                'rgba(46, 204, 113, 0.8)',
+                                'rgba(52, 152, 219, 0.8)',
+                                'rgba(155, 89, 182, 0.8)',
+                                'rgba(231, 76, 60, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(46, 204, 113, 1)',
+                                'rgba(52, 152, 219, 1)',
+                                'rgba(155, 89, 182, 1)',
+                                'rgba(231, 76, 60, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+            {% endif %}
+
+            // Confidence Chart
+            {% if metrics.accuracy_stats %}
+            const confidenceCtx = document.getElementById('confidenceChart');
+            if (confidenceCtx) {
+                new Chart(confidenceCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High Confidence (>80%)', 'Medium Confidence (30-80%)', 'Low Confidence (<30%)'],
+                        datasets: [{
+                            data: [
+                                {{ metrics.accuracy_stats.high_confidence_predictions }},
+                                {{ metrics.basic_stats.total_predictions - metrics.accuracy_stats.high_confidence_predictions - metrics.accuracy_stats.low_confidence_predictions }},
+                                {{ metrics.accuracy_stats.low_confidence_predictions }}
+                            ],
+                            backgroundColor: [
+                                'rgba(46, 204, 113, 0.8)',
+                                'rgba(243, 156, 18, 0.8)',
+                                'rgba(231, 76, 60, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(46, 204, 113, 1)',
+                                'rgba(243, 156, 18, 1)',
+                                'rgba(231, 76, 60, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            {% endif %}
+
+            // Detection Chart
+            {% if metrics.detection_stats %}
+            const detectionCtx = document.getElementById('detectionChart');
+            if (detectionCtx) {
+                new Chart(detectionCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Deforestation Detected', 'No Deforestation'],
+                        datasets: [{
+                            data: [
+                                {{ metrics.detection_stats.deforestation_detected }},
+                                {{ metrics.detection_stats.no_deforestation_detected }}
+                            ],
+                            backgroundColor: [
+                                'rgba(231, 76, 60, 0.8)',
+                                'rgba(46, 204, 113, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(231, 76, 60, 1)',
+                                'rgba(46, 204, 113, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            {% endif %}
+        }
+    </script>
+</body>
+</html>

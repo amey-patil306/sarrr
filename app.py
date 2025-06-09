@@ -13,6 +13,9 @@ import io
 import base64
 import math
 import time
+import psutil
+import platform
+from datetime import datetime
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -28,6 +31,19 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Initialize Llama service
 llama_service = LlamaService()
+
+# Model performance tracking
+MODEL_PERFORMANCE = {
+    'total_predictions': 0,
+    'correct_predictions': 0,
+    'false_positives': 0,
+    'false_negatives': 0,
+    'processing_times': [],
+    'confidence_scores': [],
+    'start_time': datetime.now(),
+    'model_version': '2.1.0',
+    'last_updated': datetime.now()
+}
 
 # Use a pre-trained model instead of loading from file
 print("Loading pre-trained ResNet50 model...")
@@ -82,6 +98,114 @@ REGIONAL_FOREST_DATA = {
         'region_bounds': None
     }
 }
+
+def update_model_performance(prediction_time, confidence_score, is_correct=None):
+    """Update model performance metrics"""
+    global MODEL_PERFORMANCE
+    
+    MODEL_PERFORMANCE['total_predictions'] += 1
+    MODEL_PERFORMANCE['processing_times'].append(prediction_time)
+    MODEL_PERFORMANCE['confidence_scores'].append(confidence_score)
+    MODEL_PERFORMANCE['last_updated'] = datetime.now()
+    
+    # Keep only last 1000 records for performance
+    if len(MODEL_PERFORMANCE['processing_times']) > 1000:
+        MODEL_PERFORMANCE['processing_times'] = MODEL_PERFORMANCE['processing_times'][-1000:]
+    if len(MODEL_PERFORMANCE['confidence_scores']) > 1000:
+        MODEL_PERFORMANCE['confidence_scores'] = MODEL_PERFORMANCE['confidence_scores'][-1000:]
+    
+    # Update accuracy metrics if feedback is provided
+    if is_correct is not None:
+        if is_correct:
+            MODEL_PERFORMANCE['correct_predictions'] += 1
+        else:
+            # This would need user feedback to determine false positives/negatives
+            pass
+
+def get_system_info():
+    """Get system information for performance metrics"""
+    try:
+        return {
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'memory_percent': psutil.virtual_memory().percent,
+            'memory_available_gb': round(psutil.virtual_memory().available / (1024**3), 2),
+            'memory_total_gb': round(psutil.virtual_memory().total / (1024**3), 2),
+            'disk_usage_percent': psutil.disk_usage('/').percent,
+            'platform': platform.platform(),
+            'python_version': platform.python_version(),
+            'tensorflow_version': tf.__version__,
+            'opencv_version': cv2.__version__
+        }
+    except Exception as e:
+        return {'error': f'Could not retrieve system info: {str(e)}'}
+
+def calculate_model_metrics():
+    """Calculate comprehensive model performance metrics"""
+    global MODEL_PERFORMANCE
+    
+    metrics = {
+        'basic_stats': {
+            'total_predictions': MODEL_PERFORMANCE['total_predictions'],
+            'model_version': MODEL_PERFORMANCE['model_version'],
+            'uptime_hours': round((datetime.now() - MODEL_PERFORMANCE['start_time']).total_seconds() / 3600, 2),
+            'last_updated': MODEL_PERFORMANCE['last_updated'].strftime('%Y-%m-%d %H:%M:%S')
+        },
+        'performance_stats': {},
+        'accuracy_stats': {},
+        'system_info': get_system_info()
+    }
+    
+    # Performance statistics
+    if MODEL_PERFORMANCE['processing_times']:
+        processing_times = MODEL_PERFORMANCE['processing_times']
+        metrics['performance_stats'] = {
+            'avg_processing_time': round(np.mean(processing_times), 3),
+            'min_processing_time': round(np.min(processing_times), 3),
+            'max_processing_time': round(np.max(processing_times), 3),
+            'median_processing_time': round(np.median(processing_times), 3),
+            'std_processing_time': round(np.std(processing_times), 3)
+        }
+    
+    # Confidence score statistics
+    if MODEL_PERFORMANCE['confidence_scores']:
+        confidence_scores = MODEL_PERFORMANCE['confidence_scores']
+        metrics['accuracy_stats'] = {
+            'avg_confidence': round(np.mean(confidence_scores), 3),
+            'min_confidence': round(np.min(confidence_scores), 3),
+            'max_confidence': round(np.max(confidence_scores), 3),
+            'median_confidence': round(np.median(confidence_scores), 3),
+            'std_confidence': round(np.std(confidence_scores), 3),
+            'high_confidence_predictions': len([s for s in confidence_scores if s > 0.8]),
+            'low_confidence_predictions': len([s for s in confidence_scores if s < 0.3])
+        }
+        
+        # Calculate accuracy if we have correct predictions data
+        if MODEL_PERFORMANCE['correct_predictions'] > 0:
+            accuracy = MODEL_PERFORMANCE['correct_predictions'] / MODEL_PERFORMANCE['total_predictions']
+            metrics['accuracy_stats']['estimated_accuracy'] = round(accuracy * 100, 2)
+    
+    # Model architecture info
+    metrics['model_info'] = {
+        'base_model': 'ResNet50',
+        'input_shape': f"{IMG_SIZE[0]}x{IMG_SIZE[1]}x3",
+        'total_parameters': classifier.count_params() if hasattr(classifier, 'count_params') else 'N/A',
+        'trainable_parameters': sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights]) if hasattr(classifier, 'trainable_weights') else 'N/A',
+        'output_type': 'Binary Classification (Sigmoid)',
+        'preprocessing': 'ResNet50 Standard Preprocessing'
+    }
+    
+    # Detection statistics
+    if MODEL_PERFORMANCE['confidence_scores']:
+        deforestation_detections = len([s for s in MODEL_PERFORMANCE['confidence_scores'] if s > 0.4])
+        no_deforestation_detections = MODEL_PERFORMANCE['total_predictions'] - deforestation_detections
+        
+        metrics['detection_stats'] = {
+            'deforestation_detected': deforestation_detections,
+            'no_deforestation_detected': no_deforestation_detections,
+            'deforestation_detection_rate': round((deforestation_detections / MODEL_PERFORMANCE['total_predictions']) * 100, 2) if MODEL_PERFORMANCE['total_predictions'] > 0 else 0
+        }
+    
+    return metrics
 
 def identify_forest_region(lat, lon):
     """Identify which forest region the coordinates belong to"""
@@ -575,6 +699,8 @@ def predict_deforestation(image_path, lat=None, lon=None):
     """
     Enhanced deforestation prediction using both CNN and computer vision analysis
     """
+    start_time = time.time()
+    
     try:
         print(f"Analyzing image: {image_path}")
         
@@ -638,6 +764,10 @@ def predict_deforestation(image_path, lat=None, lon=None):
             cv2.imwrite(mask_path, mask)
             cv2.imwrite(output_path, overlay)
 
+            # Update performance metrics
+            processing_time = time.time() - start_time
+            update_model_performance(processing_time, final_score)
+
             return True, original_path, mask_path, output_path, final_score, statistics
 
         else:
@@ -651,10 +781,18 @@ def predict_deforestation(image_path, lat=None, lon=None):
             cv2.imwrite(mask_path, mask)
             cv2.imwrite(output_path, overlay)
 
+            # Update performance metrics
+            processing_time = time.time() - start_time
+            update_model_performance(processing_time, final_score)
+
             return False, original_path, mask_path, output_path, final_score, statistics
         
     except Exception as e:
         print(f"Error in predict_deforestation: {e}")
+        # Update performance metrics even for errors
+        processing_time = time.time() - start_time
+        update_model_performance(processing_time, 0.1)
+        
         # Return default values in case of error
         return False, image_path, None, None, 0.1, None
 
@@ -715,6 +853,18 @@ def index():
             )
 
     return render_template("index.html", uploaded_image=None)
+
+@app.route("/performance_metrics")
+def performance_metrics():
+    """Display model performance metrics"""
+    metrics = calculate_model_metrics()
+    return render_template("performance_metrics.html", metrics=metrics)
+
+@app.route("/api/performance_metrics")
+def api_performance_metrics():
+    """API endpoint for performance metrics"""
+    metrics = calculate_model_metrics()
+    return jsonify(metrics)
 
 @app.route("/analyze_location", methods=["POST"])
 def analyze_location():
