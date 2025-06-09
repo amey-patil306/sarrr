@@ -273,32 +273,149 @@ def analyze_image_content(image_path):
         print(f"Error in image content analysis: {e}")
         return 0.5, f"Analysis error: {str(e)}"
 
-# Function to refine deforestation mask
+def create_enhanced_deforestation_mask(image_path):
+    """
+    Create an enhanced deforestation mask with different shades for:
+    - Healthy forest areas (green shades)
+    - Deforested areas (red/brown shades)
+    - Partially affected areas (yellow/orange shades)
+    """
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            # Create a dummy image if loading fails
+            img = np.ones((224, 224, 3), dtype=np.uint8) * 128
+        
+        # Resize to standard size
+        img = cv2.resize(img, IMG_SIZE)
+        original_img = img.copy()
+        
+        # Convert to different color spaces for analysis
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Create mask for different vegetation types
+        mask = np.zeros((IMG_SIZE[0], IMG_SIZE[1], 3), dtype=np.uint8)
+        
+        # 1. Detect healthy forest areas (dense green vegetation)
+        # Green hue range in HSV for healthy vegetation
+        lower_green_dense = np.array([40, 60, 60])
+        upper_green_dense = np.array([80, 255, 255])
+        healthy_forest_mask = cv2.inRange(hsv, lower_green_dense, upper_green_dense)
+        
+        # 2. Detect moderate vegetation (lighter green areas)
+        lower_green_moderate = np.array([35, 30, 40])
+        upper_green_moderate = np.array([85, 180, 200])
+        moderate_vegetation_mask = cv2.inRange(hsv, lower_green_moderate, upper_green_moderate)
+        
+        # 3. Detect deforested areas (brown, bare soil, cleared land)
+        # Brown/bare soil detection
+        lower_brown = np.array([8, 50, 20])
+        upper_brown = np.array([25, 255, 200])
+        brown_mask = cv2.inRange(hsv, lower_brown, upper_brown)
+        
+        # Gray/bare areas (roads, cleared land)
+        lower_gray = np.array([0, 0, 50])
+        upper_gray = np.array([180, 30, 200])
+        gray_mask = cv2.inRange(hsv, lower_gray, upper_gray)
+        
+        # 4. Detect water bodies (blue areas)
+        lower_blue = np.array([100, 50, 50])
+        upper_blue = np.array([130, 255, 255])
+        water_mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        
+        # Apply morphological operations to clean up masks
+        kernel = np.ones((3, 3), np.uint8)
+        healthy_forest_mask = cv2.morphologyEx(healthy_forest_mask, cv2.MORPH_CLOSE, kernel)
+        moderate_vegetation_mask = cv2.morphologyEx(moderate_vegetation_mask, cv2.MORPH_CLOSE, kernel)
+        brown_mask = cv2.morphologyEx(brown_mask, cv2.MORPH_CLOSE, kernel)
+        gray_mask = cv2.morphologyEx(gray_mask, cv2.MORPH_CLOSE, kernel)
+        
+        # Combine deforested areas
+        deforested_mask = cv2.bitwise_or(brown_mask, gray_mask)
+        
+        # Create colored mask with different shades
+        # Healthy forest areas - Dark Green (0, 150, 0)
+        mask[healthy_forest_mask > 0] = [0, 150, 0]
+        
+        # Moderate vegetation - Light Green (50, 200, 50)
+        moderate_only = cv2.bitwise_and(moderate_vegetation_mask, cv2.bitwise_not(healthy_forest_mask))
+        mask[moderate_only > 0] = [50, 200, 50]
+        
+        # Partially affected areas (transition zones) - Yellow/Orange (0, 165, 255)
+        # Areas that are neither dense forest nor clearly deforested
+        transition_mask = cv2.bitwise_not(cv2.bitwise_or(
+            cv2.bitwise_or(healthy_forest_mask, moderate_vegetation_mask),
+            deforested_mask
+        ))
+        # Apply additional filtering for transition areas
+        transition_mask = cv2.bitwise_and(transition_mask, cv2.bitwise_not(water_mask))
+        mask[transition_mask > 0] = [0, 165, 255]  # Orange
+        
+        # Deforested areas - Red (0, 0, 255)
+        mask[deforested_mask > 0] = [0, 0, 255]
+        
+        # Water bodies - Blue (255, 100, 0)
+        mask[water_mask > 0] = [255, 100, 0]
+        
+        # Create a legend overlay
+        legend_height = 120
+        legend_width = 200
+        legend = np.ones((legend_height, legend_width, 3), dtype=np.uint8) * 255
+        
+        # Add legend items
+        legend_items = [
+            ("Healthy Forest", [0, 150, 0]),
+            ("Moderate Vegetation", [50, 200, 50]),
+            ("Transition Zone", [0, 165, 255]),
+            ("Deforested Area", [0, 0, 255]),
+            ("Water Body", [255, 100, 0])
+        ]
+        
+        y_offset = 15
+        for i, (label, color) in enumerate(legend_items):
+            # Draw color square
+            cv2.rectangle(legend, (10, y_offset), (25, y_offset + 10), color, -1)
+            # Add text (note: OpenCV text is basic, in production you'd use PIL for better text)
+            cv2.putText(legend, label, (30, y_offset + 8), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+            y_offset += 20
+        
+        # Create visualization overlay
+        overlay = cv2.addWeighted(original_img, 0.6, mask, 0.4, 0)
+        
+        # Add legend to the overlay (top-right corner)
+        overlay_with_legend = overlay.copy()
+        legend_y = 10
+        legend_x = overlay.shape[1] - legend_width - 10
+        
+        # Ensure legend fits within image bounds
+        if legend_x > 0 and legend_y + legend_height < overlay.shape[0]:
+            overlay_with_legend[legend_y:legend_y + legend_height, legend_x:legend_x + legend_width] = legend
+        
+        return original_img, mask, overlay_with_legend
+        
+    except Exception as e:
+        print(f"Error creating enhanced deforestation mask: {e}")
+        # Return basic masks if enhanced version fails
+        img = cv2.imread(image_path)
+        if img is None:
+            img = np.ones((224, 224, 3), dtype=np.uint8) * 128
+        img = cv2.resize(img, IMG_SIZE)
+        
+        # Create simple mask
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        mask_colored = cv2.applyColorMap(mask, cv2.COLORMAP_JET)
+        overlay = cv2.addWeighted(img, 0.7, mask_colored, 0.3, 0)
+        
+        return img, mask_colored, overlay
+
+# Function to refine deforestation mask (legacy function, now using enhanced version)
 def refine_deforestation_mask(image_path):
-    img = cv2.imread(image_path)
-    if img is None:
-        # Create a dummy image if loading fails
-        img = np.ones((224, 224, 3), dtype=np.uint8) * 128
-    
-    img = cv2.resize(img, IMG_SIZE)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Adaptive threshold to detect deforested areas
-    thresh = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 5
-    )
-
-    # Canny edge detection
-    edges = cv2.Canny(thresh, 50, 150)
-
-    # Find contours
-    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Create mask
-    mask = np.zeros_like(gray)
-    cv2.drawContours(mask, contours, -1, (255), thickness=cv2.FILLED)
-
-    return img, mask
+    """Legacy function - now calls enhanced mask creation"""
+    original, mask, overlay = create_enhanced_deforestation_mask(image_path)
+    return original, mask
 
 def deg2num(lat_deg, lon_deg, zoom):
     """Convert lat/lon to tile coordinates"""
@@ -497,8 +614,8 @@ def predict_deforestation(image_path, lat=None, lon=None):
         print(f"Final combined score: {final_score:.3f}")
         print(f"Deforestation detected: {deforestation_detected}")
 
-        # Generate visualization
-        original, mask = refine_deforestation_mask(image_path)
+        # Generate enhanced visualization
+        original, mask, overlay = create_enhanced_deforestation_mask(image_path)
 
         # Save original image
         original_filename = f"original_{int(time.time())}.jpg"
@@ -511,22 +628,30 @@ def predict_deforestation(image_path, lat=None, lon=None):
             statistics = calculate_deforestation_statistics(lat, lon, final_score, deforestation_detected)
 
         if deforestation_detected:  # Deforestation detected
-            mask_filename = f"mask_{int(time.time())}.jpg"
-            output_filename = f"output_{int(time.time())}.jpg"
+            mask_filename = f"enhanced_mask_{int(time.time())}.jpg"
+            output_filename = f"enhanced_overlay_{int(time.time())}.jpg"
             
             mask_path = os.path.join(app.config["UPLOAD_FOLDER"], mask_filename)
             output_path = os.path.join(app.config["UPLOAD_FOLDER"], output_filename)
 
-            # Create color overlay
-            mask_colored = cv2.applyColorMap(mask, cv2.COLORMAP_JET)
-            output = cv2.addWeighted(original, 0.7, mask_colored, 0.3, 0)
-
+            # Save enhanced mask and overlay
             cv2.imwrite(mask_path, mask)
-            cv2.imwrite(output_path, output)
+            cv2.imwrite(output_path, overlay)
 
             return True, original_path, mask_path, output_path, final_score, statistics
 
-        return False, original_path, None, None, final_score, statistics  # No deforestation detected
+        else:
+            # Even if no deforestation detected, still show the enhanced mask for analysis
+            mask_filename = f"enhanced_mask_{int(time.time())}.jpg"
+            output_filename = f"enhanced_overlay_{int(time.time())}.jpg"
+            
+            mask_path = os.path.join(app.config["UPLOAD_FOLDER"], mask_filename)
+            output_path = os.path.join(app.config["UPLOAD_FOLDER"], output_filename)
+
+            cv2.imwrite(mask_path, mask)
+            cv2.imwrite(output_path, overlay)
+
+            return False, original_path, mask_path, output_path, final_score, statistics
         
     except Exception as e:
         print(f"Error in predict_deforestation: {e}")
