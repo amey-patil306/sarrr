@@ -102,6 +102,16 @@
                     {{ result }}
                 </div>
                 
+                {% if confidence %}
+                <div class="confidence-score">
+                    <h3><i class="fas fa-chart-bar"></i> Model Confidence</h3>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: {{ (confidence * 100)|round(1) }}%"></div>
+                    </div>
+                    <p>{{ (confidence * 100)|round(1) }}% confidence</p>
+                </div>
+                {% endif %}
+                
                 <div class="result-images">
                     <div class="result-image-card">
                         <h3><i class="fas fa-image"></i> Original Image</h3>
@@ -127,8 +137,53 @@
                     {% endif %}
                 </div>
                 
+                <!-- AI-Powered Analytics Section -->
+                {% if analytics %}
+                <div class="ai-insights-section">
+                    <h2><i class="fas fa-brain"></i> AI-Powered Environmental Analysis</h2>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <h3><i class="fas fa-chart-line"></i> Environmental Impact Assessment</h3>
+                            <div class="insight-content">
+                                {{ analytics|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Solutions Section -->
+                {% if solutions and deforestation_detected %}
+                <div class="solutions-section">
+                    <h2><i class="fas fa-lightbulb"></i> Recommended Solutions</h2>
+                    <div class="solutions-grid">
+                        <div class="solution-card urgent">
+                            <h3><i class="fas fa-exclamation-circle"></i> Immediate Actions Required</h3>
+                            <div class="solution-content">
+                                {{ solutions|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Prevention Strategies -->
+                {% if prevention_strategies %}
+                <div class="prevention-section">
+                    <h2><i class="fas fa-shield-alt"></i> Prevention Strategies</h2>
+                    <div class="prevention-grid">
+                        <div class="prevention-card">
+                            <h3><i class="fas fa-leaf"></i> Long-term Conservation</h3>
+                            <div class="prevention-content">
+                                {{ prevention_strategies|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <div class="analysis-summary">
-                    <h3><i class="fas fa-clipboard-list"></i> Analysis Summary</h3>
+                    <h3><i class="fas fa-clipboard-list"></i> Technical Analysis Summary</h3>
                     <p>The image was analyzed using our ResNet50-based deep learning model trained on satellite imagery. 
                     {% if 'Deforestation Detected' in result %}
                         The model detected patterns consistent with deforestation activities. Red areas in the visualization highlight regions of concern.
