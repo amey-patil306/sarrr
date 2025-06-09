@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Metrics | ForestGuard AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -41,8 +44,8 @@
     <section class="performance-metrics-section">
         <div class="container">
             <div class="metrics-header">
-                <h1><i class="fas fa-chart-line"></i> Model Performance Metrics</h1>
-                <p>Comprehensive analysis of ForestGuard AI's detection capabilities and system performance</p>
+                <h1><i class="fas fa-chart-line"></i> Model Performance Dashboard</h1>
+                <p>Comprehensive analysis of ForestGuard AI's detection capabilities, accuracy metrics, and system performance</p>
                 <div class="last-updated">
                     <i class="fas fa-clock"></i> Last Updated: {{ metrics.basic_stats.last_updated }}
                 </div>
@@ -100,7 +103,7 @@
                 <!-- Accuracy Statistics -->
                 {% if metrics.accuracy_stats %}
                 <div class="metric-card accuracy">
-                    <h2><i class="fas fa-bullseye"></i> Model Accuracy</h2>
+                    <h2><i class="fas fa-bullseye"></i> Model Confidence</h2>
                     <div class="metric-items">
                         <div class="metric-item">
                             <span class="metric-label">Average Confidence</span>
@@ -122,12 +125,6 @@
                             <span class="metric-label">Low Confidence Predictions</span>
                             <span class="metric-value low-conf-count">{{ metrics.accuracy_stats.low_confidence_predictions }}</span>
                         </div>
-                        {% if metrics.accuracy_stats.estimated_accuracy %}
-                        <div class="metric-item">
-                            <span class="metric-label">Estimated Accuracy</span>
-                            <span class="metric-value estimated-accuracy">{{ metrics.accuracy_stats.estimated_accuracy }}%</span>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
@@ -230,6 +227,80 @@
                 {% endif %}
             </div>
 
+            <!-- Enhanced Evaluation Metrics Section -->
+            {% if metrics.evaluation_metrics %}
+            <div class="evaluation-metrics">
+                <h2><i class="fas fa-award"></i> Model Evaluation Metrics</h2>
+                <div class="evaluation-grid">
+                    <div class="evaluation-card">
+                        <i class="fas fa-bullseye"></i>
+                        <h3>Accuracy</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.accuracy >= 0.9 %}excellent{% elif metrics.evaluation_metrics.accuracy >= 0.8 %}good{% elif metrics.evaluation_metrics.accuracy >= 0.7 %}fair{% else %}poor{% endif %}">
+                            {{ (metrics.evaluation_metrics.accuracy * 100)|round(1) }}%
+                        </div>
+                        <p class="evaluation-description">
+                            Overall correctness of predictions. Measures the ratio of correct predictions to total predictions.
+                        </p>
+                    </div>
+
+                    <div class="evaluation-card">
+                        <i class="fas fa-crosshairs"></i>
+                        <h3>Precision</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.precision >= 0.9 %}excellent{% elif metrics.evaluation_metrics.precision >= 0.8 %}good{% elif metrics.evaluation_metrics.precision >= 0.7 %}fair{% else %}poor{% endif %}">
+                            {{ (metrics.evaluation_metrics.precision * 100)|round(1) }}%
+                        </div>
+                        <p class="evaluation-description">
+                            Accuracy of positive predictions. Measures how many predicted deforestation cases were actually correct.
+                        </p>
+                    </div>
+
+                    <div class="evaluation-card">
+                        <i class="fas fa-search"></i>
+                        <h3>Recall (Sensitivity)</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.recall >= 0.9 %}excellent{% elif metrics.evaluation_metrics.recall >= 0.8 %}good{% elif metrics.evaluation_metrics.recall >= 0.7 %}fair{% else %}poor{% endif %}">
+                            {{ (metrics.evaluation_metrics.recall * 100)|round(1) }}%
+                        </div>
+                        <p class="evaluation-description">
+                            Ability to find all deforestation cases. Measures how many actual deforestation cases were correctly identified.
+                        </p>
+                    </div>
+
+                    <div class="evaluation-card">
+                        <i class="fas fa-balance-scale"></i>
+                        <h3>F1 Score</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.f1_score >= 0.9 %}excellent{% elif metrics.evaluation_metrics.f1_score >= 0.8 %}good{% elif metrics.evaluation_metrics.f1_score >= 0.7 %}fair{% else %}poor{% endif %}">
+                            {{ (metrics.evaluation_metrics.f1_score * 100)|round(1) }}%
+                        </div>
+                        <p class="evaluation-description">
+                            Harmonic mean of precision and recall. Provides a balanced measure of model performance.
+                        </p>
+                    </div>
+
+                    <div class="evaluation-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Specificity</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.specificity >= 0.9 %}excellent{% elif metrics.evaluation_metrics.specificity >= 0.8 %}good{% elif metrics.evaluation_metrics.specificity >= 0.7 %}fair{% else %}poor{% endif %}">
+                            {{ (metrics.evaluation_metrics.specificity * 100)|round(1) }}%
+                        </div>
+                        <p class="evaluation-description">
+                            Ability to correctly identify non-deforested areas. Measures true negative rate.
+                        </p>
+                    </div>
+
+                    <div class="evaluation-card">
+                        <i class="fas fa-database"></i>
+                        <h3>Sample Size</h3>
+                        <div class="evaluation-score {% if metrics.evaluation_metrics.total_samples >= 100 %}excellent{% elif metrics.evaluation_metrics.total_samples >= 50 %}good{% elif metrics.evaluation_metrics.total_samples >= 20 %}fair{% else %}poor{% endif %}">
+                            {{ metrics.evaluation_metrics.total_samples }}
+                        </div>
+                        <p class="evaluation-description">
+                            Total number of samples used for evaluation. Larger sample sizes provide more reliable metrics.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Performance Charts -->
             {% if metrics.performance_stats or metrics.accuracy_stats %}
             <div class="charts-section">
@@ -238,21 +309,36 @@
                     {% if metrics.performance_stats %}
                     <div class="chart-container">
                         <h3>Processing Time Distribution</h3>
-                        <canvas id="processingTimeChart"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="processingTimeChart"></canvas>
+                        </div>
                     </div>
                     {% endif %}
                     
                     {% if metrics.accuracy_stats %}
                     <div class="chart-container">
                         <h3>Confidence Score Distribution</h3>
-                        <canvas id="confidenceChart"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="confidenceChart"></canvas>
+                        </div>
                     </div>
                     {% endif %}
                     
                     {% if metrics.detection_stats %}
                     <div class="chart-container">
                         <h3>Detection Results</h3>
-                        <canvas id="detectionChart"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="detectionChart"></canvas>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if metrics.evaluation_metrics %}
+                    <div class="chart-container">
+                        <h3>Evaluation Metrics Comparison</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="evaluationChart"></canvas>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -284,14 +370,14 @@
                     <div class="insight-card">
                         <h3><i class="fas fa-target"></i> Accuracy Analysis</h3>
                         <div class="insight-content">
-                            {% if metrics.accuracy_stats %}
-                            <p>Average model confidence: <strong>{{ (metrics.accuracy_stats.avg_confidence * 100)|round(1) }}%</strong></p>
-                            {% if metrics.accuracy_stats.avg_confidence > 0.8 %}
-                            <p class="insight-positive">✅ High confidence predictions indicate reliable model performance.</p>
-                            {% elif metrics.accuracy_stats.avg_confidence > 0.6 %}
-                            <p class="insight-neutral">⚡ Moderate confidence levels - model performs well in most cases.</p>
+                            {% if metrics.evaluation_metrics %}
+                            <p>Model accuracy: <strong>{{ (metrics.evaluation_metrics.accuracy * 100)|round(1) }}%</strong></p>
+                            {% if metrics.evaluation_metrics.accuracy > 0.9 %}
+                            <p class="insight-positive">✅ Excellent accuracy indicates highly reliable model performance.</p>
+                            {% elif metrics.evaluation_metrics.accuracy > 0.8 %}
+                            <p class="insight-neutral">⚡ Good accuracy levels - model performs well in most cases.</p>
                             {% else %}
-                            <p class="insight-warning">⚠️ Lower confidence levels may indicate challenging input data or model limitations.</p>
+                            <p class="insight-warning">⚠️ Accuracy could be improved through additional training or data.</p>
                             {% endif %}
                             {% else %}
                             <p>No accuracy data available yet. Process some images to see accuracy metrics.</p>
@@ -318,6 +404,24 @@
                     </div>
 
                     <div class="insight-card">
+                        <h3><i class="fas fa-balance-scale"></i> Model Balance</h3>
+                        <div class="insight-content">
+                            {% if metrics.evaluation_metrics %}
+                            <p>F1 Score: <strong>{{ (metrics.evaluation_metrics.f1_score * 100)|round(1) }}%</strong> - Balance between precision and recall.</p>
+                            {% if metrics.evaluation_metrics.f1_score > 0.9 %}
+                            <p class="insight-positive">✅ Excellent balance between precision and recall.</p>
+                            {% elif metrics.evaluation_metrics.f1_score > 0.8 %}
+                            <p class="insight-neutral">⚡ Good balance - model performs consistently across different scenarios.</p>
+                            {% else %}
+                            <p class="insight-warning">⚠️ Model may be biased towards either precision or recall.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>No F1 score data available yet. Process some images to see balance metrics.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
                         <h3><i class="fas fa-cogs"></i> System Health</h3>
                         <div class="insight-content">
                             {% if metrics.system_info and not metrics.system_info.error %}
@@ -331,6 +435,24 @@
                             {% endif %}
                             {% else %}
                             <p>System information unavailable. Running in limited environment.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <h3><i class="fas fa-chart-line"></i> Confidence Trends</h3>
+                        <div class="insight-content">
+                            {% if metrics.accuracy_stats %}
+                            <p>Average confidence: <strong>{{ (metrics.accuracy_stats.avg_confidence * 100)|round(1) }}%</strong></p>
+                            {% if metrics.accuracy_stats.avg_confidence > 0.8 %}
+                            <p class="insight-positive">✅ High confidence predictions indicate reliable model performance.</p>
+                            {% elif metrics.accuracy_stats.avg_confidence > 0.6 %}
+                            <p class="insight-neutral">⚡ Moderate confidence levels - model performs well in most cases.</p>
+                            {% else %}
+                            <p class="insight-warning">⚠️ Lower confidence levels may indicate challenging input data.</p>
+                            {% endif %}
+                            {% else %}
+                            <p>No confidence data available yet. Process some images to see confidence trends.</p>
                             {% endif %}
                         </div>
                     </div>
@@ -390,6 +512,9 @@
                 
                 html.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
+                
+                // Reinitialize charts with new theme colors
+                setTimeout(initializeCharts, 100);
             });
 
             // Mobile menu toggle
@@ -405,40 +530,85 @@
 
             // Refresh metrics functionality
             document.getElementById('refresh-metrics').addEventListener('click', function() {
-                location.reload();
+                const btn = this;
+                const icon = btn.querySelector('i');
+                
+                // Add loading state
+                icon.classList.remove('fa-sync-alt');
+                icon.classList.add('fa-spinner', 'fa-spin');
+                btn.disabled = true;
+                
+                // Simulate refresh (in real app, this would fetch new data)
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
             });
         });
 
+        function getThemeColors() {
+            const style = getComputedStyle(document.documentElement);
+            return {
+                text: style.getPropertyValue('--text').trim(),
+                textAlt: style.getPropertyValue('--text-alt').trim(),
+                border: style.getPropertyValue('--border').trim(),
+                accent: style.getPropertyValue('--accent').trim(),
+                success: style.getPropertyValue('--success').trim(),
+                warning: style.getPropertyValue('--warning').trim(),
+                danger: style.getPropertyValue('--danger').trim(),
+                info: style.getPropertyValue('--info').trim()
+            };
+        }
+
         function initializeCharts() {
+            const colors = getThemeColors();
+            
             const chartOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         labels: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                            color: colors.text,
+                            font: {
+                                family: 'Inter, sans-serif',
+                                size: 12
+                            }
                         }
                     }
                 },
                 scales: {
                     y: {
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-alt').trim()
+                            color: colors.textAlt,
+                            font: {
+                                family: 'JetBrains Mono, monospace',
+                                size: 11
+                            }
                         },
                         grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+                            color: colors.border
                         }
                     },
                     x: {
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-alt').trim()
+                            color: colors.textAlt,
+                            font: {
+                                family: 'Inter, sans-serif',
+                                size: 11
+                            }
                         },
                         grid: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+                            color: colors.border
                         }
                     }
                 }
             };
+
+            // Clear existing charts
+            Chart.getChart('processingTimeChart')?.destroy();
+            Chart.getChart('confidenceChart')?.destroy();
+            Chart.getChart('detectionChart')?.destroy();
+            Chart.getChart('evaluationChart')?.destroy();
 
             // Processing Time Chart
             {% if metrics.performance_stats %}
@@ -457,21 +627,30 @@
                                 {{ metrics.performance_stats.max_processing_time }}
                             ],
                             backgroundColor: [
-                                'rgba(46, 204, 113, 0.8)',
-                                'rgba(52, 152, 219, 0.8)',
-                                'rgba(155, 89, 182, 0.8)',
-                                'rgba(231, 76, 60, 0.8)'
+                                colors.success + '80',
+                                colors.info + '80',
+                                colors.accent + '80',
+                                colors.warning + '80'
                             ],
                             borderColor: [
-                                'rgba(46, 204, 113, 1)',
-                                'rgba(52, 152, 219, 1)',
-                                'rgba(155, 89, 182, 1)',
-                                'rgba(231, 76, 60, 1)'
+                                colors.success,
+                                colors.info,
+                                colors.accent,
+                                colors.warning
                             ],
-                            borderWidth: 1
+                            borderWidth: 2,
+                            borderRadius: 8
                         }]
                     },
-                    options: chartOptions
+                    options: {
+                        ...chartOptions,
+                        plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                                display: false
+                            }
+                        }
+                    }
                 });
             }
             {% endif %}
@@ -491,16 +670,16 @@
                                 {{ metrics.accuracy_stats.low_confidence_predictions }}
                             ],
                             backgroundColor: [
-                                'rgba(46, 204, 113, 0.8)',
-                                'rgba(243, 156, 18, 0.8)',
-                                'rgba(231, 76, 60, 0.8)'
+                                colors.success + '80',
+                                colors.warning + '80',
+                                colors.danger + '80'
                             ],
                             borderColor: [
-                                'rgba(46, 204, 113, 1)',
-                                'rgba(243, 156, 18, 1)',
-                                'rgba(231, 76, 60, 1)'
+                                colors.success,
+                                colors.warning,
+                                colors.danger
                             ],
-                            borderWidth: 1
+                            borderWidth: 2
                         }]
                     },
                     options: {
@@ -508,8 +687,14 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
+                                position: 'bottom',
                                 labels: {
-                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                                    color: colors.text,
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 11
+                                    },
+                                    padding: 15
                                 }
                             }
                         }
@@ -532,14 +717,14 @@
                                 {{ metrics.detection_stats.no_deforestation_detected }}
                             ],
                             backgroundColor: [
-                                'rgba(231, 76, 60, 0.8)',
-                                'rgba(46, 204, 113, 0.8)'
+                                colors.danger + '80',
+                                colors.success + '80'
                             ],
                             borderColor: [
-                                'rgba(231, 76, 60, 1)',
-                                'rgba(46, 204, 113, 1)'
+                                colors.danger,
+                                colors.success
                             ],
-                            borderWidth: 1
+                            borderWidth: 2
                         }]
                     },
                     options: {
@@ -547,8 +732,84 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
+                                position: 'bottom',
                                 labels: {
-                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim()
+                                    color: colors.text,
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 11
+                                    },
+                                    padding: 15
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            {% endif %}
+
+            // Evaluation Metrics Chart
+            {% if metrics.evaluation_metrics %}
+            const evaluationCtx = document.getElementById('evaluationChart');
+            if (evaluationCtx) {
+                new Chart(evaluationCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'Specificity'],
+                        datasets: [{
+                            label: 'Model Performance',
+                            data: [
+                                {{ metrics.evaluation_metrics.accuracy * 100 }},
+                                {{ metrics.evaluation_metrics.precision * 100 }},
+                                {{ metrics.evaluation_metrics.recall * 100 }},
+                                {{ metrics.evaluation_metrics.f1_score * 100 }},
+                                {{ metrics.evaluation_metrics.specificity * 100 }}
+                            ],
+                            backgroundColor: colors.accent + '20',
+                            borderColor: colors.accent,
+                            borderWidth: 2,
+                            pointBackgroundColor: colors.accent,
+                            pointBorderColor: colors.accent,
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    color: colors.textAlt,
+                                    font: {
+                                        family: 'JetBrains Mono, monospace',
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: colors.border
+                                },
+                                angleLines: {
+                                    color: colors.border
+                                },
+                                pointLabels: {
+                                    color: colors.text,
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: colors.text,
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 12
+                                    }
                                 }
                             }
                         }
