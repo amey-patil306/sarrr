@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForestGuard AI | Deforestation Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <div class="theme-toggle">
+        <button id="theme-switch">
+            <i class="fas fa-sun light-icon"></i>
+            <i class="fas fa-moon dark-icon"></i>
+        </button>
+    </div>
+
+    <!-- Header Section -->
+    <header>
+        <div class="logo">
+            <span class="logo-icon"><i class="fas fa-tree"></i></span>
+            <span class="logo-text">ForestGuard AI</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="#upload"><i class="fas fa-upload"></i> Analyze</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Protecting Forests with <span class="accent">AI Technology</span></h1>
+            <p>Detect deforestation in real-time using advanced satellite image analysis and machine learning.</p>
+            <div class="hero-buttons">
+                <a href="#upload" class="btn primary-btn"><i class="fas fa-leaf"></i> Analyze Now</a>
+                <a href="#about" class="btn secondary-btn"><i class="fas fa-info-circle"></i> Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <h2><i class="fas fa-seedling"></i> Our Mission</h2>
+            <div class="mission-content">
+                <div class="mission-text">
+                    <p>ForestGuard AI uses advanced deep learning algorithms to identify deforestation patterns in satellite imagery. Our technology helps environmental agencies, researchers, and activists monitor forest health and prevent illegal logging activities.</p>
+                </div>
+                <div class="statistics">
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>95%</h3>
+                        <p>Detection Accuracy</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-globe-americas"></i>
+                        <h3>15M+</h3>
+                        <p>Hectares Monitored</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-tree"></i>
+                        <h3>60K+</h3>
+                        <p>Forests Protected</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <h2><i class="fas fa-satellite"></i> Analyze Satellite Imagery</h2>
+            <div class="upload-container">
+                <form action="/" method="POST" enctype="multipart/form-data" class="upload-form">
+                    <div class="file-upload">
+                        <input type="file" name="file" id="file-input" accept="image/*" required>
+                        <label for="file-input">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Choose a file</span>
+                        </label>
+                        <p id="file-name" class="file-name">No file selected</p>
+                    </div>
+                    <button type="submit" class="btn primary-btn"><i class="fas fa-search"></i> Analyze Image</button>
+                </form>
+            </div>
+
+            {% if uploaded_image %}
+            <div class="results-container">
+                <h2 class="results-title">Analysis Results</h2>
+                <div class="result-badge {% if 'Deforestation Detected' in result %}warning{% else %}success{% endif %}">
+                    <i class="fas {% if 'Deforestation Detected' in result %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %}"></i>
+                    {{ result }}
+                </div>
+                
+                <div class="result-images">
+                    <div class="result-image-card">
+                        <h3><i class="fas fa-image"></i> Original Image</h3>
+                        <div class="image-container">
+                            <img src="{{ uploaded_image }}" alt="Uploaded Image">
+                        </div>
+                    </div>
+                    
+                    {% if mask %}
+                    <div class="result-image-card">
+                        <h3><i class="fas fa-layer-group"></i> Deforestation Mask</h3>
+                        <div class="image-container">
+                            <img src="{{ mask }}" alt="Deforestation Mask">
+                        </div>
+                    </div>
+                    
+                    <div class="result-image-card">
+                        <h3><i class="fas fa-map"></i> Visualization Overlay</h3>
+                        <div class="image-container">
+                            <img src="{{ output }}" alt="Visualization Overlay">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="analysis-summary">
+                    <h3><i class="fas fa-clipboard-list"></i> Analysis Summary</h3>
+                    <p>The image was analyzed using our ResNet50-based deep learning model trained on satellite imagery. 
+                    {% if 'Deforestation Detected' in result %}
+                        The model detected patterns consistent with deforestation activities. Red areas in the visualization highlight regions of concern.
+                    {% else %}
+                        The model did not detect significant patterns associated with deforestation in this image.
+                    {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer id="contact">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-tree"></i> ForestGuard AI
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#upload">Analyze</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h3>Contact Us</h3>
+                <p><i class="fas fa-envelope"></i> info@forestguard-ai.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 ForestGuard AI | All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeSwitch = document.getElementById('theme-switch');
+            const html = document.documentElement;
+            
+            // Check for saved theme preference or use default dark theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+            
+            themeSwitch.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+            
+            // File upload name display
+            const fileInput = document.getElementById('file-input');
+            const fileName = document.getElementById('file-name');
+            
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    fileName.textContent = fileInput.files[0].name;
+                } else {
+                    fileName.textContent = 'No file selected';
+                }
+            });
+            
+            // Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const nav = document.querySelector('nav');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                nav.classList.toggle('mobile-active');
+            });
+        });
+    </script>
+</body>
+</html>
