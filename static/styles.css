@@ -519,6 +519,40 @@ nav ul li a:hover {
     border-radius: var(--radius-sm);
 }
 
+/* AI Analytics Section */
+.ai-analytics-section {
+    margin-top: var(--space-xl);
+    background-color: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    box-shadow: 0 5px 15px var(--shadow);
+    text-align: center;
+}
+
+.ai-analytics-section h2 {
+    margin-bottom: var(--space-md);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
+.ai-analytics-section p {
+    margin-bottom: var(--space-lg);
+    color: var(--text-alt);
+}
+
+.loading-spinner {
+    color: var(--accent);
+    font-size: var(--fs-md);
+    margin-top: var(--space-md);
+}
+
+.loading-spinner i {
+    margin-right: var(--space-xs);
+}
+
 /* AI Insights Section */
 .ai-insights-section {
     margin-top: var(--space-xl);

@@ -5,11 +5,12 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.resnet50 import preprocess_input
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from llama_service import LlamaService
 
 # Initialize Flask app
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'  # Change this to a random secret key
 
 # Define upload folder
 UPLOAD_FOLDER = "static/uploads"
@@ -122,33 +123,14 @@ def index():
                 file_path
             )
 
-            # Get AI-powered insights
-            solutions = None
-            analytics = None
-            prevention_strategies = None
-            
-            try:
-                if deforestation_detected:
-                    severity = get_severity_level(confidence)
-                    solutions = llama_service.get_deforestation_solutions(
-                        location_info="Satellite imagery analysis", 
-                        severity=severity
-                    )
-                
-                analytics = llama_service.get_image_analytics(
-                    deforestation_detected, 
-                    confidence
-                )
-                
-                prevention_strategies = llama_service.get_prevention_strategies()
-                
-            except Exception as e:
-                print(f"Error getting AI insights: {e}")
-                # Provide fallback content if API fails
-                if deforestation_detected:
-                    solutions = "• Implement immediate reforestation programs\n• Establish protected zones\n• Engage local communities in conservation"
-                analytics = "• Environmental impact assessment needed\n• Monitor biodiversity changes\n• Track climate implications"
-                prevention_strategies = "• Strengthen forest protection policies\n• Implement sustainable land use practices\n• Use satellite monitoring systems"
+            # Store analysis results in session for later AI analysis
+            session['analysis_results'] = {
+                'deforestation_detected': deforestation_detected,
+                'confidence': float(confidence),
+                'original': original,
+                'mask': mask,
+                'output': output
+            }
 
             return render_template(
                 "index.html",
@@ -157,14 +139,69 @@ def index():
                 output=output,
                 result="🛑 Deforestation Detected!" if deforestation_detected else "✅ No Deforestation Detected!",
                 confidence=confidence,
-                solutions=solutions,
-                analytics=analytics,
-                prevention_strategies=prevention_strategies,
-                deforestation_detected=deforestation_detected
+                deforestation_detected=deforestation_detected,
+                show_ai_button=True
             )
 
     return render_template("index.html", uploaded_image=None)
 
+@app.route("/get_ai_analytics", methods=["POST"])
+def get_ai_analytics():
+    """Get AI-powered analytics for the analyzed image"""
+    try:
+        # Get stored analysis results from session
+        analysis_results = session.get('analysis_results')
+        if not analysis_results:
+            return jsonify({
+                'success': False,
+                'error': 'No analysis results found. Please analyze an image first.'
+            })
+
+        deforestation_detected = analysis_results['deforestation_detected']
+        confidence = analysis_results['confidence']
+
+        # Get AI-powered insights
+        solutions = None
+        analytics = None
+        prevention_strategies = None
+        
+        if deforestation_detected:
+            severity = get_severity_level(confidence)
+            solutions = llama_service.get_deforestation_solutions(
+                location_info="Satellite imagery analysis", 
+                severity=severity
+            )
+        
+        analytics = llama_service.get_image_analytics(
+            deforestation_detected, 
+            confidence
+        )
+        
+        prevention_strategies = llama_service.get_prevention_strategies()
+
+        # Provide fallback content if API returns None
+        if not solutions and deforestation_detected:
+            solutions = "• Implement immediate reforestation programs\n• Establish protected zones around affected areas\n• Engage local communities in conservation efforts\n• Deploy rapid response teams for monitoring"
+        
+        if not analytics:
+            analytics = "• Environmental impact assessment indicates potential ecosystem disruption\n• Monitor biodiversity changes in the affected region\n• Track climate implications including carbon release\n• Assess soil erosion and water cycle impacts"
+        
+        if not prevention_strategies:
+            prevention_strategies = "• Strengthen forest protection policies and enforcement\n• Implement sustainable land use practices\n• Use satellite monitoring systems for early detection\n• Promote community-based forest management\n• Develop economic incentives for conservation"
+
+        return jsonify({
+            'success': True,
+            'solutions': solutions,
+            'analytics': analytics,
+            'prevention_strategies': prevention_strategies
+        })
+
+    except Exception as e:
+        print(f"Error getting AI insights: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error getting AI insights: {str(e)}'
+        })
 
 if __name__ == "__main__":
     app.run(debug=True)

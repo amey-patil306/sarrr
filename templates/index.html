@@ -136,51 +136,62 @@
                     </div>
                     {% endif %}
                 </div>
-                
-                <!-- AI-Powered Analytics Section -->
-                {% if analytics %}
-                <div class="ai-insights-section">
-                    <h2><i class="fas fa-brain"></i> AI-Powered Environmental Analysis</h2>
-                    <div class="insights-grid">
-                        <div class="insight-card">
-                            <h3><i class="fas fa-chart-line"></i> Environmental Impact Assessment</h3>
-                            <div class="insight-content">
-                                {{ analytics|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
-                            </div>
-                        </div>
+
+                <!-- AI Analytics Button -->
+                {% if show_ai_button %}
+                <div class="ai-analytics-section">
+                    <h2><i class="fas fa-brain"></i> Get AI-Powered Insights</h2>
+                    <p>Get detailed environmental analysis and solutions from our AI assistant.</p>
+                    <button id="get-ai-analytics" class="btn primary-btn">
+                        <i class="fas fa-robot"></i> Get AI Analytics
+                    </button>
+                    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Getting AI insights...
                     </div>
                 </div>
                 {% endif %}
 
-                <!-- Solutions Section -->
-                {% if solutions and deforestation_detected %}
-                <div class="solutions-section">
-                    <h2><i class="fas fa-lightbulb"></i> Recommended Solutions</h2>
-                    <div class="solutions-grid">
-                        <div class="solution-card urgent">
-                            <h3><i class="fas fa-exclamation-circle"></i> Immediate Actions Required</h3>
-                            <div class="solution-content">
-                                {{ solutions|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
+                <!-- AI Results Container (Initially Hidden) -->
+                <div id="ai-results-container" style="display: none;">
+                    <!-- AI-Powered Analytics Section -->
+                    <div class="ai-insights-section">
+                        <h2><i class="fas fa-brain"></i> AI-Powered Environmental Analysis</h2>
+                        <div class="insights-grid">
+                            <div class="insight-card">
+                                <h3><i class="fas fa-chart-line"></i> Environmental Impact Assessment</h3>
+                                <div class="insight-content" id="analytics-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% endif %}
 
-                <!-- Prevention Strategies -->
-                {% if prevention_strategies %}
-                <div class="prevention-section">
-                    <h2><i class="fas fa-shield-alt"></i> Prevention Strategies</h2>
-                    <div class="prevention-grid">
-                        <div class="prevention-card">
-                            <h3><i class="fas fa-leaf"></i> Long-term Conservation</h3>
-                            <div class="prevention-content">
-                                {{ prevention_strategies|safe|replace('\n', '<br>')|replace('•', '<span class="bullet">•</span>') }}
+                    <!-- Solutions Section -->
+                    <div class="solutions-section" id="solutions-section" style="display: none;">
+                        <h2><i class="fas fa-lightbulb"></i> Recommended Solutions</h2>
+                        <div class="solutions-grid">
+                            <div class="solution-card urgent">
+                                <h3><i class="fas fa-exclamation-circle"></i> Immediate Actions Required</h3>
+                                <div class="solution-content" id="solutions-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prevention Strategies -->
+                    <div class="prevention-section">
+                        <h2><i class="fas fa-shield-alt"></i> Prevention Strategies</h2>
+                        <div class="prevention-grid">
+                            <div class="prevention-card">
+                                <h3><i class="fas fa-leaf"></i> Long-term Conservation</h3>
+                                <div class="prevention-content" id="prevention-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endif %}
                 
                 <div class="analysis-summary">
                     <h3><i class="fas fa-clipboard-list"></i> Technical Analysis Summary</h3>
@@ -266,6 +277,66 @@
             mobileMenuBtn.addEventListener('click', function() {
                 nav.classList.toggle('mobile-active');
             });
+
+            // AI Analytics button functionality
+            const getAiAnalyticsBtn = document.getElementById('get-ai-analytics');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const aiResultsContainer = document.getElementById('ai-results-container');
+
+            if (getAiAnalyticsBtn) {
+                getAiAnalyticsBtn.addEventListener('click', function() {
+                    // Show loading spinner and hide button
+                    getAiAnalyticsBtn.style.display = 'none';
+                    loadingSpinner.style.display = 'block';
+
+                    // Make API call to get AI analytics
+                    fetch('/get_ai_analytics', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingSpinner.style.display = 'none';
+                        
+                        if (data.success) {
+                            // Populate the content
+                            if (data.analytics) {
+                                document.getElementById('analytics-content').innerHTML = 
+                                    data.analytics.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                            }
+                            
+                            if (data.solutions) {
+                                document.getElementById('solutions-content').innerHTML = 
+                                    data.solutions.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                                document.getElementById('solutions-section').style.display = 'block';
+                            }
+                            
+                            if (data.prevention_strategies) {
+                                document.getElementById('prevention-content').innerHTML = 
+                                    data.prevention_strategies.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                            }
+                            
+                            // Show the results container
+                            aiResultsContainer.style.display = 'block';
+                            
+                            // Scroll to results
+                            aiResultsContainer.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            // Show error message
+                            getAiAnalyticsBtn.style.display = 'block';
+                            alert('Error getting AI insights: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        loadingSpinner.style.display = 'none';
+                        getAiAnalyticsBtn.style.display = 'block';
+                        console.error('Error:', error);
+                        alert('Error getting AI insights. Please try again.');
+                    });
+                });
+            }
         });
     </script>
 </body>
