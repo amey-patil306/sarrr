@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ForestGuard AI | Deforestation Detection</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -26,7 +27,8 @@
             <ul>
                 <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
                 <li><a href="#about"><i class="fas fa-info-circle"></i> About</a></li>
-                <li><a href="#upload"><i class="fas fa-upload"></i> Analyze</a></li>
+                <li><a href="#location-analysis"><i class="fas fa-map-marker-alt"></i> Location</a></li>
+                <li><a href="#upload"><i class="fas fa-upload"></i> Upload</a></li>
                 <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
             </ul>
         </nav>
@@ -41,8 +43,8 @@
             <h1>Protecting Forests with <span class="accent">AI Technology</span></h1>
             <p>Detect deforestation in real-time using advanced satellite image analysis and machine learning.</p>
             <div class="hero-buttons">
-                <a href="#upload" class="btn primary-btn"><i class="fas fa-leaf"></i> Analyze Now</a>
-                <a href="#about" class="btn secondary-btn"><i class="fas fa-info-circle"></i> Learn More</a>
+                <a href="#location-analysis" class="btn primary-btn"><i class="fas fa-map-marker-alt"></i> Analyze Location</a>
+                <a href="#upload" class="btn secondary-btn"><i class="fas fa-upload"></i> Upload Image</a>
             </div>
         </div>
     </section>
@@ -76,10 +78,76 @@
         </div>
     </section>
 
+    <!-- Location Analysis Section -->
+    <section id="location-analysis" class="location-section">
+        <div class="container">
+            <h2><i class="fas fa-map-marker-alt"></i> Analyze Specific Location</h2>
+            <div class="location-container">
+                <div class="location-input-section">
+                    <h3><i class="fas fa-crosshairs"></i> Enter Coordinates</h3>
+                    <div class="coordinate-inputs">
+                        <div class="input-group">
+                            <label for="latitude">Latitude:</label>
+                            <input type="number" id="latitude" step="any" placeholder="e.g., -3.4653" min="-90" max="90">
+                        </div>
+                        <div class="input-group">
+                            <label for="longitude">Longitude:</label>
+                            <input type="number" id="longitude" step="any" placeholder="e.g., -62.2159" min="-180" max="180">
+                        </div>
+                        <div class="input-group">
+                            <label for="zoom-level">Zoom Level:</label>
+                            <select id="zoom-level">
+                                <option value="12">12 - Regional View</option>
+                                <option value="13">13 - Area View</option>
+                                <option value="14">14 - Local View</option>
+                                <option value="15" selected>15 - Detailed View</option>
+                                <option value="16">16 - Close View</option>
+                                <option value="17">17 - Very Close</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="location-buttons">
+                        <button id="show-on-map" class="btn secondary-btn">
+                            <i class="fas fa-map"></i> Show on Map
+                        </button>
+                        <button id="analyze-location" class="btn primary-btn">
+                            <i class="fas fa-satellite"></i> Analyze Location
+                        </button>
+                    </div>
+                    <div class="quick-locations">
+                        <h4><i class="fas fa-star"></i> Quick Locations</h4>
+                        <div class="quick-location-buttons">
+                            <button class="quick-location-btn" data-lat="-3.4653" data-lon="-62.2159">Amazon Rainforest</button>
+                            <button class="quick-location-btn" data-lat="0.7893" data-lon="113.9213">Borneo</button>
+                            <button class="quick-location-btn" data-lat="-0.7893" data-lon="11.6094">Congo Basin</button>
+                            <button class="quick-location-btn" data-lat="61.5240" data-lon="105.3188">Siberian Forest</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="map-section">
+                    <h3><i class="fas fa-globe"></i> Interactive Map</h3>
+                    <div id="map" class="map-container"></div>
+                    <div class="map-instructions">
+                        <p><i class="fas fa-info-circle"></i> Click on the map to select coordinates, or enter them manually above.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Analysis Loading -->
+            <div id="location-loading" class="location-loading" style="display: none;">
+                <div class="loading-content">
+                    <i class="fas fa-satellite fa-spin"></i>
+                    <p>Fetching satellite imagery and analyzing...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Upload Section -->
     <section id="upload" class="upload-section">
         <div class="container">
-            <h2><i class="fas fa-satellite"></i> Analyze Satellite Imagery</h2>
+            <h2><i class="fas fa-satellite"></i> Upload Satellite Imagery</h2>
             <div class="upload-container">
                 <form action="/" method="POST" enctype="multipart/form-data" class="upload-form">
                     <div class="file-upload">
@@ -208,6 +276,82 @@
         </div>
     </section>
 
+    <!-- Location Results Section (Initially Hidden) -->
+    <div id="location-results" class="location-results" style="display: none;">
+        <div class="container">
+            <div class="results-container">
+                <h2 class="results-title">Location Analysis Results</h2>
+                <div id="location-result-badge" class="result-badge">
+                    <!-- Content will be loaded here -->
+                </div>
+                
+                <div id="location-confidence" class="confidence-score" style="display: none;">
+                    <h3><i class="fas fa-chart-bar"></i> Model Confidence</h3>
+                    <div class="confidence-bar">
+                        <div id="location-confidence-fill" class="confidence-fill"></div>
+                    </div>
+                    <p id="location-confidence-text"></p>
+                </div>
+                
+                <div id="location-result-images" class="result-images">
+                    <!-- Content will be loaded here -->
+                </div>
+
+                <!-- AI Analytics Button for Location -->
+                <div class="ai-analytics-section">
+                    <h2><i class="fas fa-brain"></i> Get AI-Powered Insights</h2>
+                    <p>Get detailed environmental analysis and solutions from our AI assistant.</p>
+                    <button id="get-location-ai-analytics" class="btn primary-btn">
+                        <i class="fas fa-robot"></i> Get AI Analytics
+                    </button>
+                    <div id="location-loading-spinner" class="loading-spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Getting AI insights...
+                    </div>
+                </div>
+
+                <!-- AI Results Container for Location (Initially Hidden) -->
+                <div id="location-ai-results-container" style="display: none;">
+                    <!-- Same structure as upload results -->
+                    <div class="ai-insights-section">
+                        <h2><i class="fas fa-brain"></i> AI-Powered Environmental Analysis</h2>
+                        <div class="insights-grid">
+                            <div class="insight-card">
+                                <h3><i class="fas fa-chart-line"></i> Environmental Impact Assessment</h3>
+                                <div class="insight-content" id="location-analytics-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="solutions-section" id="location-solutions-section" style="display: none;">
+                        <h2><i class="fas fa-lightbulb"></i> Recommended Solutions</h2>
+                        <div class="solutions-grid">
+                            <div class="solution-card urgent">
+                                <h3><i class="fas fa-exclamation-circle"></i> Immediate Actions Required</h3>
+                                <div class="solution-content" id="location-solutions-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-section">
+                        <h2><i class="fas fa-shield-alt"></i> Prevention Strategies</h2>
+                        <div class="prevention-grid">
+                            <div class="prevention-card">
+                                <h3><i class="fas fa-leaf"></i> Long-term Conservation</h3>
+                                <div class="prevention-content" id="location-prevention-content">
+                                    <!-- Content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer Section -->
     <footer id="contact">
         <div class="footer-content">
@@ -219,7 +363,8 @@
                 <ul>
                     <li><a href="#">Home</a></li>
                     <li><a href="#about">About</a></li>
-                    <li><a href="#upload">Analyze</a></li>
+                    <li><a href="#location-analysis">Location</a></li>
+                    <li><a href="#upload">Upload</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
             </div>
@@ -240,7 +385,12 @@
         </div>
     </footer>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Global variables
+        let map;
+        let marker;
+
         // Theme toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
             const themeSwitch = document.getElementById('theme-switch');
@@ -262,13 +412,15 @@
             const fileInput = document.getElementById('file-input');
             const fileName = document.getElementById('file-name');
             
-            fileInput.addEventListener('change', function() {
-                if (fileInput.files.length > 0) {
-                    fileName.textContent = fileInput.files[0].name;
-                } else {
-                    fileName.textContent = 'No file selected';
-                }
-            });
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (fileInput.files.length > 0) {
+                        fileName.textContent = fileInput.files[0].name;
+                    } else {
+                        fileName.textContent = 'No file selected';
+                    }
+                });
+            }
             
             // Mobile menu toggle
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
@@ -278,66 +430,266 @@
                 nav.classList.toggle('mobile-active');
             });
 
+            // Initialize map
+            initializeMap();
+
+            // Location analysis functionality
+            setupLocationAnalysis();
+
             // AI Analytics button functionality
+            setupAIAnalytics();
+        });
+
+        function initializeMap() {
+            // Initialize the map
+            map = L.map('map').setView([-3.4653, -62.2159], 6); // Amazon rainforest center
+
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click event to map
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lon = e.latlng.lng.toFixed(6);
+                
+                // Update input fields
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lon;
+                
+                // Update marker
+                updateMapMarker(lat, lon);
+            });
+        }
+
+        function updateMapMarker(lat, lon) {
+            // Remove existing marker
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            
+            // Add new marker
+            marker = L.marker([lat, lon]).addTo(map);
+            
+            // Center map on marker
+            map.setView([lat, lon], map.getZoom());
+        }
+
+        function setupLocationAnalysis() {
+            // Show on map button
+            document.getElementById('show-on-map').addEventListener('click', function() {
+                const lat = parseFloat(document.getElementById('latitude').value);
+                const lon = parseFloat(document.getElementById('longitude').value);
+                
+                if (isNaN(lat) || isNaN(lon)) {
+                    alert('Please enter valid coordinates');
+                    return;
+                }
+                
+                updateMapMarker(lat, lon);
+            });
+
+            // Analyze location button
+            document.getElementById('analyze-location').addEventListener('click', function() {
+                const lat = parseFloat(document.getElementById('latitude').value);
+                const lon = parseFloat(document.getElementById('longitude').value);
+                const zoom = parseInt(document.getElementById('zoom-level').value);
+                
+                if (isNaN(lat) || isNaN(lon)) {
+                    alert('Please enter valid coordinates');
+                    return;
+                }
+                
+                analyzeLocation(lat, lon, zoom);
+            });
+
+            // Quick location buttons
+            document.querySelectorAll('.quick-location-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const lat = parseFloat(this.dataset.lat);
+                    const lon = parseFloat(this.dataset.lon);
+                    
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lon;
+                    
+                    updateMapMarker(lat, lon);
+                });
+            });
+        }
+
+        function analyzeLocation(lat, lon, zoom) {
+            // Show loading
+            document.getElementById('location-loading').style.display = 'block';
+            
+            // Hide previous results
+            document.getElementById('location-results').style.display = 'none';
+            
+            // Scroll to loading section
+            document.getElementById('location-loading').scrollIntoView({ behavior: 'smooth' });
+            
+            // Make API call
+            fetch('/analyze_location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    lat: lat,
+                    lon: lon,
+                    zoom: zoom
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('location-loading').style.display = 'none';
+                
+                if (data.success) {
+                    displayLocationResults(data);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('location-loading').style.display = 'none';
+                console.error('Error:', error);
+                alert('Error analyzing location. Please try again.');
+            });
+        }
+
+        function displayLocationResults(data) {
+            // Update result badge
+            const badge = document.getElementById('location-result-badge');
+            badge.className = `result-badge ${data.deforestation_detected ? 'warning' : 'success'}`;
+            badge.innerHTML = `
+                <i class="fas ${data.deforestation_detected ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                ${data.deforestation_detected ? '🛑 Deforestation Detected!' : '✅ No Deforestation Detected!'}
+            `;
+            
+            // Update confidence score
+            if (data.confidence) {
+                const confidenceSection = document.getElementById('location-confidence');
+                const confidenceFill = document.getElementById('location-confidence-fill');
+                const confidenceText = document.getElementById('location-confidence-text');
+                
+                confidenceSection.style.display = 'block';
+                confidenceFill.style.width = `${(data.confidence * 100).toFixed(1)}%`;
+                confidenceText.textContent = `${(data.confidence * 100).toFixed(1)}% confidence`;
+            }
+            
+            // Update result images
+            const imagesContainer = document.getElementById('location-result-images');
+            let imagesHTML = `
+                <div class="result-image-card">
+                    <h3><i class="fas fa-image"></i> Satellite Image</h3>
+                    <div class="image-container">
+                        <img src="${data.original}" alt="Satellite Image">
+                    </div>
+                </div>
+            `;
+            
+            if (data.mask && data.output) {
+                imagesHTML += `
+                    <div class="result-image-card">
+                        <h3><i class="fas fa-layer-group"></i> Deforestation Mask</h3>
+                        <div class="image-container">
+                            <img src="${data.mask}" alt="Deforestation Mask">
+                        </div>
+                    </div>
+                    <div class="result-image-card">
+                        <h3><i class="fas fa-map"></i> Visualization Overlay</h3>
+                        <div class="image-container">
+                            <img src="${data.output}" alt="Visualization Overlay">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            imagesContainer.innerHTML = imagesHTML;
+            
+            // Show results section
+            document.getElementById('location-results').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('location-results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function setupAIAnalytics() {
+            // Upload AI Analytics button
             const getAiAnalyticsBtn = document.getElementById('get-ai-analytics');
             const loadingSpinner = document.getElementById('loading-spinner');
             const aiResultsContainer = document.getElementById('ai-results-container');
 
             if (getAiAnalyticsBtn) {
                 getAiAnalyticsBtn.addEventListener('click', function() {
-                    // Show loading spinner and hide button
-                    getAiAnalyticsBtn.style.display = 'none';
-                    loadingSpinner.style.display = 'block';
-
-                    // Make API call to get AI analytics
-                    fetch('/get_ai_analytics', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        loadingSpinner.style.display = 'none';
-                        
-                        if (data.success) {
-                            // Populate the content
-                            if (data.analytics) {
-                                document.getElementById('analytics-content').innerHTML = 
-                                    data.analytics.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
-                            }
-                            
-                            if (data.solutions) {
-                                document.getElementById('solutions-content').innerHTML = 
-                                    data.solutions.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
-                                document.getElementById('solutions-section').style.display = 'block';
-                            }
-                            
-                            if (data.prevention_strategies) {
-                                document.getElementById('prevention-content').innerHTML = 
-                                    data.prevention_strategies.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
-                            }
-                            
-                            // Show the results container
-                            aiResultsContainer.style.display = 'block';
-                            
-                            // Scroll to results
-                            aiResultsContainer.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                            // Show error message
-                            getAiAnalyticsBtn.style.display = 'block';
-                            alert('Error getting AI insights: ' + data.error);
-                        }
-                    })
-                    .catch(error => {
-                        loadingSpinner.style.display = 'none';
-                        getAiAnalyticsBtn.style.display = 'block';
-                        console.error('Error:', error);
-                        alert('Error getting AI insights. Please try again.');
-                    });
+                    getAIInsights(getAiAnalyticsBtn, loadingSpinner, aiResultsContainer, 'analytics-content', 'solutions-content', 'prevention-content', 'solutions-section');
                 });
             }
-        });
+
+            // Location AI Analytics button
+            const getLocationAiAnalyticsBtn = document.getElementById('get-location-ai-analytics');
+            const locationLoadingSpinner = document.getElementById('location-loading-spinner');
+            const locationAiResultsContainer = document.getElementById('location-ai-results-container');
+
+            if (getLocationAiAnalyticsBtn) {
+                getLocationAiAnalyticsBtn.addEventListener('click', function() {
+                    getAIInsights(getLocationAiAnalyticsBtn, locationLoadingSpinner, locationAiResultsContainer, 'location-analytics-content', 'location-solutions-content', 'location-prevention-content', 'location-solutions-section');
+                });
+            }
+        }
+
+        function getAIInsights(button, spinner, container, analyticsId, solutionsId, preventionId, solutionsSectionId) {
+            // Show loading spinner and hide button
+            button.style.display = 'none';
+            spinner.style.display = 'block';
+
+            // Make API call to get AI analytics
+            fetch('/get_ai_analytics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                
+                if (data.success) {
+                    // Populate the content
+                    if (data.analytics) {
+                        document.getElementById(analyticsId).innerHTML = 
+                            data.analytics.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                    }
+                    
+                    if (data.solutions) {
+                        document.getElementById(solutionsId).innerHTML = 
+                            data.solutions.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                        document.getElementById(solutionsSectionId).style.display = 'block';
+                    }
+                    
+                    if (data.prevention_strategies) {
+                        document.getElementById(preventionId).innerHTML = 
+                            data.prevention_strategies.replace(/\n/g, '<br>').replace(/•/g, '<span class="bullet">•</span>');
+                    }
+                    
+                    // Show the results container
+                    container.style.display = 'block';
+                    
+                    // Scroll to results
+                    container.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Show error message
+                    button.style.display = 'block';
+                    alert('Error getting AI insights: ' + data.error);
+                }
+            })
+            .catch(error => {
+                spinner.style.display = 'none';
+                button.style.display = 'block';
+                console.error('Error:', error);
+                alert('Error getting AI insights. Please try again.');
+            });
+        }
     </script>
 </body>
 </html>

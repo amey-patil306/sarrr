@@ -7,6 +7,10 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.resnet50 import preprocess_input
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from llama_service import LlamaService
+import requests
+from PIL import Image
+import io
+import base64
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -59,6 +63,51 @@ def refine_deforestation_mask(image_path):
     cv2.drawContours(mask, contours, -1, (255), thickness=cv2.FILLED)
 
     return img, mask
+
+# Function to fetch satellite imagery from coordinates
+def fetch_satellite_image(lat, lon, zoom=15, size="512x512"):
+    """
+    Fetch satellite imagery using a mapping service
+    This example uses a placeholder - you can integrate with services like:
+    - Google Maps Static API
+    - Mapbox Static Images API
+    - OpenStreetMap tile servers
+    """
+    try:
+        # Example using a free tile service (you may need to replace with a proper API)
+        # This is a simplified example - in production, use proper satellite imagery APIs
+        
+        # Calculate tile coordinates
+        import math
+        def deg2num(lat_deg, lon_deg, zoom):
+            lat_rad = math.radians(lat_deg)
+            n = 2.0 ** zoom
+            xtile = int((lon_deg + 180.0) / 360.0 * n)
+            ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
+            return (xtile, ytile)
+        
+        x, y = deg2num(lat, lon, zoom)
+        
+        # For demonstration, we'll create a placeholder image
+        # In production, replace this with actual satellite imagery API calls
+        placeholder_url = f"https://tile.openstreetmap.org/{zoom}/{x}/{y}.png"
+        
+        response = requests.get(placeholder_url, timeout=10)
+        if response.status_code == 200:
+            # Save the image
+            filename = f"satellite_{lat}_{lon}_{zoom}.png"
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            
+            with open(filepath, 'wb') as f:
+                f.write(response.content)
+            
+            return filepath
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"Error fetching satellite image: {e}")
+        return None
 
 # Function to predict deforestation
 def predict_deforestation(image_path):
@@ -145,6 +194,61 @@ def index():
 
     return render_template("index.html", uploaded_image=None)
 
+@app.route("/analyze_location", methods=["POST"])
+def analyze_location():
+    """Analyze a specific location using coordinates"""
+    try:
+        data = request.get_json()
+        lat = float(data.get('lat'))
+        lon = float(data.get('lon'))
+        zoom = int(data.get('zoom', 15))
+        
+        # Validate coordinates
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.'
+            })
+        
+        # Fetch satellite image
+        image_path = fetch_satellite_image(lat, lon, zoom)
+        
+        if not image_path:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to fetch satellite imagery for the specified location.'
+            })
+        
+        # Analyze the fetched image
+        deforestation_detected, original, mask, output, confidence = predict_deforestation(image_path)
+        
+        # Store analysis results in session
+        session['analysis_results'] = {
+            'deforestation_detected': deforestation_detected,
+            'confidence': float(confidence),
+            'original': original,
+            'mask': mask,
+            'output': output,
+            'location': {'lat': lat, 'lon': lon, 'zoom': zoom}
+        }
+        
+        return jsonify({
+            'success': True,
+            'deforestation_detected': deforestation_detected,
+            'confidence': float(confidence),
+            'original': original,
+            'mask': mask,
+            'output': output,
+            'location': f"Lat: {lat}, Lon: {lon}"
+        })
+        
+    except Exception as e:
+        print(f"Error analyzing location: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Error analyzing location: {str(e)}'
+        })
+
 @app.route("/get_ai_analytics", methods=["POST"])
 def get_ai_analytics():
     """Get AI-powered analytics for the analyzed image"""
@@ -159,6 +263,7 @@ def get_ai_analytics():
 
         deforestation_detected = analysis_results['deforestation_detected']
         confidence = analysis_results['confidence']
+        location_info = analysis_results.get('location', {})
 
         # Get AI-powered insights
         solutions = None
@@ -167,8 +272,9 @@ def get_ai_analytics():
         
         if deforestation_detected:
             severity = get_severity_level(confidence)
+            location_str = f"Coordinates: {location_info.get('lat', 'N/A')}, {location_info.get('lon', 'N/A')}" if location_info else "Uploaded image"
             solutions = llama_service.get_deforestation_solutions(
-                location_info="Satellite imagery analysis", 
+                location_info=location_str, 
                 severity=severity
             )
         

@@ -346,6 +346,177 @@ nav ul li a:hover {
     color: var(--text-alt);
 }
 
+/* Location Analysis Section */
+.location-section {
+    padding: var(--space-xl) 0;
+    background-color: var(--bg);
+}
+
+.location-section h2 {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+    color: var(--accent);
+}
+
+.location-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+    margin-bottom: var(--space-xl);
+}
+
+.location-input-section {
+    background-color: var(--card-bg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.location-input-section h3 {
+    margin-bottom: var(--space-md);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.coordinate-inputs {
+    display: grid;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.input-group label {
+    font-weight: bold;
+    color: var(--text);
+}
+
+.input-group input,
+.input-group select {
+    padding: var(--space-sm);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: var(--fs-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.location-buttons {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.location-buttons .btn {
+    flex: 1;
+}
+
+.quick-locations h4 {
+    margin-bottom: var(--space-sm);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.quick-location-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xs);
+}
+
+.quick-location-btn {
+    padding: var(--space-xs) var(--space-sm);
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    font-size: var(--fs-xs);
+}
+
+.quick-location-btn:hover {
+    background-color: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.map-section {
+    background-color: var(--card-bg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 5px 15px var(--shadow);
+}
+
+.map-section h3 {
+    margin-bottom: var(--space-md);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.map-container {
+    height: 400px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 2px solid var(--border);
+}
+
+.map-instructions {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background-color: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    color: var(--text-alt);
+}
+
+.location-loading {
+    background-color: var(--card-bg);
+    padding: var(--space-xl);
+    border-radius: var(--radius-md);
+    box-shadow: 0 5px 15px var(--shadow);
+    text-align: center;
+    margin-top: var(--space-lg);
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.loading-content i {
+    font-size: 3rem;
+    color: var(--accent);
+}
+
+.loading-content p {
+    font-size: var(--fs-md);
+    color: var(--text-alt);
+}
+
+.location-results {
+    padding: var(--space-xl) 0;
+    background-color: var(--bg-alt);
+}
+
 /* Upload Section */
 .upload-section {
     padding: var(--space-xl) 0;
@@ -878,5 +1049,21 @@ footer {
     
     .insights-grid, .solutions-grid, .prevention-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .location-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .location-buttons {
+        flex-direction: column;
+    }
+    
+    .quick-location-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-container {
+        height: 300px;
     }
 }
