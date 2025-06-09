@@ -138,7 +138,10 @@
             <div id="location-loading" class="location-loading" style="display: none;">
                 <div class="loading-content">
                     <i class="fas fa-satellite fa-spin"></i>
-                    <p>Fetching satellite imagery and analyzing...</p>
+                    <p>Fetching satellite imagery and analyzing for deforestation...</p>
+                    <div class="loading-details">
+                        <p><small>This may take 10-30 seconds depending on the location and zoom level.</small></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -348,6 +351,13 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="analysis-summary">
+                    <h3><i class="fas fa-clipboard-list"></i> Technical Analysis Summary</h3>
+                    <p id="location-analysis-summary">
+                        <!-- Content will be loaded here -->
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -444,9 +454,10 @@
             // Initialize the map
             map = L.map('map').setView([-3.4653, -62.2159], 6); // Amazon rainforest center
 
-            // Add tile layer
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+            // Add tile layer with satellite imagery
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri, Maxar, Earthstar Geographics',
+                maxZoom: 18
             }).addTo(map);
 
             // Add click event to map
@@ -473,7 +484,7 @@
             marker = L.marker([lat, lon]).addTo(map);
             
             // Center map on marker
-            map.setView([lat, lon], map.getZoom());
+            map.setView([lat, lon], Math.max(map.getZoom(), 10));
         }
 
         function setupLocationAnalysis() {
@@ -484,6 +495,11 @@
                 
                 if (isNaN(lat) || isNaN(lon)) {
                     alert('Please enter valid coordinates');
+                    return;
+                }
+                
+                if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                    alert('Please enter valid coordinates:\nLatitude: -90 to 90\nLongitude: -180 to 180');
                     return;
                 }
                 
@@ -498,6 +514,11 @@
                 
                 if (isNaN(lat) || isNaN(lon)) {
                     alert('Please enter valid coordinates');
+                    return;
+                }
+                
+                if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                    alert('Please enter valid coordinates:\nLatitude: -90 to 90\nLongitude: -180 to 180');
                     return;
                 }
                 
@@ -528,6 +549,8 @@
             // Scroll to loading section
             document.getElementById('location-loading').scrollIntoView({ behavior: 'smooth' });
             
+            console.log(`Analyzing location: lat=${lat}, lon=${lon}, zoom=${zoom}`);
+            
             // Make API call
             fetch('/analyze_location', {
                 method: 'POST',
@@ -540,24 +563,31 @@
                     zoom: zoom
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 document.getElementById('location-loading').style.display = 'none';
                 
                 if (data.success) {
                     displayLocationResults(data);
                 } else {
                     alert('Error: ' + data.error);
+                    console.error('Analysis error:', data.error);
                 }
             })
             .catch(error => {
                 document.getElementById('location-loading').style.display = 'none';
-                console.error('Error:', error);
-                alert('Error analyzing location. Please try again.');
+                console.error('Network error:', error);
+                alert('Network error analyzing location. Please check your connection and try again.');
             });
         }
 
         function displayLocationResults(data) {
+            console.log('Displaying location results:', data);
+            
             // Update result badge
             const badge = document.getElementById('location-result-badge');
             badge.className = `result-badge ${data.deforestation_detected ? 'warning' : 'success'}`;
@@ -567,7 +597,7 @@
             `;
             
             // Update confidence score
-            if (data.confidence) {
+            if (data.confidence !== undefined) {
                 const confidenceSection = document.getElementById('location-confidence');
                 const confidenceFill = document.getElementById('location-confidence-fill');
                 const confidenceText = document.getElementById('location-confidence-text');
@@ -581,9 +611,9 @@
             const imagesContainer = document.getElementById('location-result-images');
             let imagesHTML = `
                 <div class="result-image-card">
-                    <h3><i class="fas fa-image"></i> Satellite Image</h3>
+                    <h3><i class="fas fa-satellite"></i> Satellite Image</h3>
                     <div class="image-container">
-                        <img src="${data.original}" alt="Satellite Image">
+                        <img src="${data.original}" alt="Satellite Image" onerror="this.style.display='none'">
                     </div>
                 </div>
             `;
@@ -593,13 +623,13 @@
                     <div class="result-image-card">
                         <h3><i class="fas fa-layer-group"></i> Deforestation Mask</h3>
                         <div class="image-container">
-                            <img src="${data.mask}" alt="Deforestation Mask">
+                            <img src="${data.mask}" alt="Deforestation Mask" onerror="this.style.display='none'">
                         </div>
                     </div>
                     <div class="result-image-card">
                         <h3><i class="fas fa-map"></i> Visualization Overlay</h3>
                         <div class="image-container">
-                            <img src="${data.output}" alt="Visualization Overlay">
+                            <img src="${data.output}" alt="Visualization Overlay" onerror="this.style.display='none'">
                         </div>
                     </div>
                 `;
@@ -607,11 +637,26 @@
             
             imagesContainer.innerHTML = imagesHTML;
             
+            // Update analysis summary
+            const summaryElement = document.getElementById('location-analysis-summary');
+            if (summaryElement) {
+                summaryElement.innerHTML = `
+                    The satellite image from coordinates ${data.location} was analyzed using our ResNet50-based deep learning model. 
+                    ${data.deforestation_detected ? 
+                        'The model detected patterns consistent with deforestation activities. Red areas in the visualization highlight regions of concern.' : 
+                        'The model did not detect significant patterns associated with deforestation in this location.'
+                    }
+                    ${data.message ? '<br><br>' + data.message : ''}
+                `;
+            }
+            
             // Show results section
             document.getElementById('location-results').style.display = 'block';
             
             // Scroll to results
-            document.getElementById('location-results').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                document.getElementById('location-results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         }
 
         function setupAIAnalytics() {
